@@ -11,7 +11,11 @@ Functions for extracting EMIT and AVIRIS spectra within polygons
 from rasterstats import zonal_stats
 import fiona
 import os
+from netCDF4 import Dataset
+import geopandas as gpd
 import pandas as pd
+
+
 
 def extract():
     # Extract statistics within polygons for a set of files
@@ -39,7 +43,9 @@ def extract():
     
     # Work through every image in the rasters folder and calculate the zonal statistics for it
     for img in rasterPaths:
-        zs = zonal_stats(cafos, img, stats=rasterStat)
+        
+        
+        zs = nc_zonal_stats(img, cafos, stats=rasterStat)
         results.append(zs)
 
     # Combine lists into a dictionary of DataFrames
@@ -65,5 +71,42 @@ def extract():
     
     return result_df
     
+
+
+def nc_zonal_stats(ncFile, shpFile):
+    dataset = Dataset(ncFile) 
+    band_names = list(dataset.variables.keys())  # List of band names (variables)
+    gdf = gpd.read_file(shpFile)
+    
+    # List to store the zonal stats results for each band
+    zonal_stats_list = []
+    
+    # Loop through each band in the .nc file
+    for band_name in band_names:
+        # Get the band data from the .nc file
+        band_data = dataset.variables[band_name]  # Get the band data
+        
+        # Extract the band data (this may need adjustment depending on how the data is stored)
+        band_array = band_data[:]
+        
+        # Use rasterstats to calculate zonal statistics for this band
+        stats = zonal_stats(gdf, band_array, stats=['mean'])
+        
+        # Extract the desired statistics for each region and store in the list
+        stats_df = pd.DataFrame(stats)
+        
+        # You can assign a new column name for the band statistics
+        stats_df[band_name] = stats_df['mean']  # Here we add the 'mean' value for this band
+       
+    # Combine the statistics for each band into a single DataFrame
+    zonal_stats_df = pd.concat(zonal_stats_list, axis=1)
+    
+    # Optionally, you can rename the columns to match the band names
+    zonal_stats_df.columns = band_names
+    
+    # Close the .nc file when done
+    dataset.close()
+    
+    return zonal_stats_df
     
 extract()
