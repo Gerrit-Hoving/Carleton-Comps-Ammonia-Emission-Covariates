@@ -15,6 +15,11 @@ import pandas as pd
 import rasterio
 import xarray as xr
 
+import sys
+sys.path.append('/data/Documents/Projects/comps/repo')
+import emit_tools
+
+
 def extract():
     # Extract statistics within polygons for a set of files
     
