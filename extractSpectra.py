@@ -12,6 +12,7 @@ from rasterstats import zonal_stats
 import fiona
 import os
 import pandas as pd
+import numpy as np
 import rasterio
 import xarray as xr
 
@@ -75,6 +76,7 @@ def extract():
 
 
 def nc_zonal_stats(nc_file, shp_file):
+    nc_file=r'/data/Documents/Projects/comps/data/EMIT/EMIT_L2A_RFL_001_20240423T183333_2411412_004.nc'
     raster = xr.open_dataset(nc_file)
     
     wvl = xr.open_dataset(nc_file,group='sensor_band_parameters')
@@ -89,68 +91,46 @@ def nc_zonal_stats(nc_file, shp_file):
     del wvl
     del loc
 
-
+    # Open nc file orthorectified
+    raster = emit_tools.emit_xarray(nc_file, ortho=True)
     
+    # Limit to good wavelnegths
+    raster['reflectance'].data[:,:,raster['good_wavelengths'].data==0] = np.nan
+    
+    # Transpose dimensions
+    raster = raster.transpose('wavelengths','latitude','longitude')
+    
+    #Testing saving then reopening with rio
+    raster.to_netcdf('../data/geo_ds_out.nc')
+    ds = rasterio.open('../data/geo_ds_out.nc')
     
     
     # List all the variables (bands) in the NetCDF file
-    band_names = list(raster.data_vars)
+    band_names = list(raster['reflectance']['wavelengths'].values)
     print(f"Found {len(band_names)} bands: {band_names}")
+    
+    zonal_stats_list = []
     
     # Loop through each band and extract it as a raster using rasterio
     for band_name in band_names:
         print(f"Reading band: {band_name}")
         
-        # Extract the band data (this will return a DataArray)
-        band_data = raster[band_name].values
+        # Extract the band data
+        band_data = raster.sel(wavelengths = band_name)
         
-        # Get metadata information from the NetCDF file to create a raster
-        # You may need to adapt this to match the specific structure of your NetCDF file
-        # Assuming that the dimensions are lat, lon, and time, and lat/lon are the coordinates
-        lat = raster['lat'].values  # Latitude values (adjust if needed)
-        lon = raster['lon'].values  # Longitude values (adjust if needed)
-    
-        # Get the dimensions and create an affine transform for the raster
-        nlat, nlon = band_data.shape
-        pixel_size = 0.1  # Example pixel size, adjust based on your dataset
-        upper_left_x = lon.min()  # Minimum longitude
-        upper_left_y = lat.max()  # Maximum latitude
-    
-        from rasterio.transform import from_origin
-        transform = from_origin(upper_left_x, upper_left_y, pixel_size, pixel_size)
+        stats = zonal_stats(shp_file, band_data, stats=['mean'])
         
-        # Define the metadata for the new raster
-        profile = {
-            'driver': 'GTiff',
-            'count': 1,  # Only one band
-            'dtype': band_data.dtype,
-            'width': nlon,
-            'height': nlat,
-            'crs': 'EPSG:4326',  # Adjust to your CRS if necessary
-            'transform': transform
-        }
-    
-        # Output file path for the band
-        tiff_filename = f"{band_name}.tif"
+        stats_df = pd.DataFrame(stats)
         
-        zonal_stats_list = []
+        # You can assign a new column name for the band statistics
+        stats_df[band_name] = stats_df['mean']  # Here we add the 'mean' value for this band
+       
+        zonal_stats_list.append(stats_df)
         
-        # Create the GeoTIFF file using rasterio
-        with rasterio.open(tiff_filename, 'w', **profile) as dst:
-            dst.write(band_data, 1)  # Write the band data to the first band of the GeoTIFF
-            print(f"Band '{band_name}' saved as {tiff_filename}")
-            
-            stats = zonal_stats(shp_file, dst, stats=['mean'])
-            
-            stats_df = pd.DataFrame(stats)
-            
-            # You can assign a new column name for the band statistics
-            stats_df[band_name] = stats_df['mean']  # Here we add the 'mean' value for this band
+        
            
-            zonal_stats_list.append(stats_df)
-           
-        # Combine the statistics for each band into a single DataFrame
-        zonal_stats_df = pd.concat(zonal_stats_list, axis=1)
+    # Combine the statistics for each band into a single DataFrame
+    zonal_stats_df = pd.concat(zonal_stats_list, axis=1)
         
     # Close the dataset when done
     raster.close()
