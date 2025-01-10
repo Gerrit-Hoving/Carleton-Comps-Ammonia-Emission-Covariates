@@ -18,7 +18,7 @@ import os
 # Uses zonal_stats to extract the specified stats from an orthorectified EMIT 
 # raster in ENVI format for each of the polygons in a given shapefile
 
-def extractEMITByRaster(rasterPath, vectorPath, stats = ['median']):
+def extractEMITByRaster(rasterPath, vectorPath, rasterStats = ['median']):
     cafos = gpd.read_file(vectorPath)
     with rasterio.open(rasterPath) as inRaster:
         numBands = inRaster.count
@@ -32,7 +32,7 @@ def extractEMITByRaster(rasterPath, vectorPath, stats = ['median']):
     # Calculate zonal statistics for each band
     for band in range(1, numBands + 1):
         # Calculate zonal statistics for the current band
-        stats = zonal_stats(cafos, rasterPath, band=band)
+        stats = zonal_stats(cafos, rasterPath, band=band, stats=rasterStats)
         
         # Convert the stats to a DataFrame and add a column for the band
         stats_df = pd.DataFrame(stats)
@@ -62,7 +62,7 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, stats = ['median']):
     
     # Work through every image in the rasters folder and calculate the zonal statistics for it
     for img in rasterPaths:
-        zs = extractEMITByRaster(vectorPath, img, stats=stats)
+        zs = extractEMITByRaster(vectorPath, img, rasterStats=stats)
         results.append(zs)
         
     # Combine lists into a dictionary of DataFrames
