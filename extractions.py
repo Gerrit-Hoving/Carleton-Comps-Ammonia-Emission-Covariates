@@ -61,12 +61,12 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, stats = ['median']):
     results = []
     
     # Work through every image in the rasters folder and calculate the zonal statistics for it
-    for img in rasterPaths:
-        zs = extractEMITByRaster(vectorPath, img, rasterStats=stats)
+    for file in rasterPaths:
+        zs = extractEMITByRaster(file, vectorPath, rasterStats=stats)
         results.append(zs)
         
     # Combine lists into a dictionary of DataFrames
-    rasterNames.insert(0, "CAFO")
+    #rasterNames.insert(0, "CAFO")
     dfs = {}
     for list_name, data in zip(rasterNames, results):
         # Create a DataFrame from the list of dictionaries
