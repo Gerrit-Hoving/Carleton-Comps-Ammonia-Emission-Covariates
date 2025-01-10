@@ -80,7 +80,18 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, stats = ['median']):
     # Concatenate all DataFrames horizontally (axis=1)
     result_df = pd.concat(dfs.values(), axis=1)
     
-    return result_df
+    # Take the mean of the values for each band
+    median_df = pd.DataFrame()
+    
+    for band in range(1, 286):
+        # Create a list of columns that refer to the current band
+        band_columns = [col for col in result_df.columns if f'band_{band}' in col]
+        
+        # Calculate the median of those columns and add it to the new DataFrame
+        median_df[f'reflectance_band_{band}_median'] = result_df[band_columns].median(axis=1)
+    
+    
+    return median_df
 
 
 folder = r'D:\Documents\Projects\comps\data\process'
