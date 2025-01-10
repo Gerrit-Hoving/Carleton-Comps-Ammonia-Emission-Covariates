@@ -88,8 +88,9 @@ vector = r'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_EMIT_WGS84.shp'
 
 df = extractAvgAcrossRasters(folder, vector)
 
-
 raster = r'D:\Documents\Projects\comps\data\process\EMIT_L2A_RFL_001_20240423T183345_2411412_005_reflectance'
 vector = r'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_EMIT_WGS84.shp'
  
 df = extractEMITByRaster(raster, vector)
+
+df.to_csv('testExtracted.csv')
