@@ -17,15 +17,18 @@ import rasterio
 import xarray as xr
 
 import sys
-sys.path.append('/data/Documents/Projects/comps/repo')
+sys.path.append(r"C:\Users\Gerrit\Documents\Projects\comps\repo")
 import emit_tools
 
 
 def extract():
     # Extract statistics within polygons for a set of files
     
-    fileDirectory = r'/data/Documents/Projects/comps/data/EMIT'
-    polygonFile = r'/data/Documents/Projects/comps/data/Shapefiles/CAFOs.gpkg'
+    fileDirectory = r'D:\Documents\Projects\comps\data\EMIT'
+    polygonFile = r'D:\Documents\Projects\comps\data\Shapefiles\CAFOs.gpkg'
+    
+    #fileDirectory = r'/data/Documents/Projects/comps/data/EMIT'
+    #polygonFile = r'/data/Documents/Projects/comps/data/Shapefiles/CAFOs.gpkg'
     polygonLayer = "CAFOs_EMIT_CorrectedV3"
     dropColumns = ['CAFO_sum_emission_auto', 'CAFO_sum_emission_uncertainty_auto', 'CAFO_Point_Count']
     
@@ -76,7 +79,12 @@ def extract():
 
 
 def nc_zonal_stats(nc_file, shp_file):
-    nc_file=r'/data/Documents/Projects/comps/data/EMIT/EMIT_L2A_RFL_001_20240423T183333_2411412_004.nc'
+    nc_file=r'D:\Documents\Projects\comps\data\EMIT\EMIT_L2A_RFL_001_20240423T183333_2411412_004.nc'
+    polygonLayer = "CAFOs_EMIT_CorrectedV3"
+    polygonFile = r'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_EMIT_WGS84.shp'
+    shp_file = fiona.open(polygonFile)
+    
+    #nc_file=r'/data/Documents/Projects/comps/data/EMIT/EMIT_L2A_RFL_001_20240423T183333_2411412_004.nc'
     raster = xr.open_dataset(nc_file)
     
     wvl = xr.open_dataset(nc_file,group='sensor_band_parameters')
@@ -101,9 +109,12 @@ def nc_zonal_stats(nc_file, shp_file):
     raster = raster.transpose('wavelengths','latitude','longitude')
     
     #Testing saving then reopening with rio
-    raster.to_netcdf('../data/geo_ds_out.nc')
-    ds = rasterio.open('../data/geo_ds_out.nc')
+    test_file = r'D:\Documents\Projects\comps\data\geo_ds_out.nc'
+    raster.to_netcdf(test_file)
+    ds = rasterio.open(test_file)
     
+    envi_file = r'D:\Documents\Projects\comps\data\process\EMIT_L2A_RFL_001_20240423T183333_2411412_004_reflectance'
+    test = zonal_stats(shp_file, envi_file, stats=['mean'])
     
     # List all the variables (bands) in the NetCDF file
     band_names = list(raster['reflectance']['wavelengths'].values)

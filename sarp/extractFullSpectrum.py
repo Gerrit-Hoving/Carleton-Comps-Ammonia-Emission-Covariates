@@ -15,9 +15,9 @@ import rasterio
 
 
 def extractFullSpectrum():
-    rasterPath = r'/data/Documents/Projects/comps/data/geo_ds_out.nc'
+    rasterPath = r'D:\Documents\Projects\comps\data\process\EMIT_L2A_RFL_001_20240423T183345_2411412_005_reflectance'
     rasterStats = 'median'
-    vectorPath = r'/data/Documents/Projects/comps/data/Shapefiles/CAFOs.gpkg'
+    vectorPath = r'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_EMIT_WGS84.shp'
     vectorLayer = "CAFOs_EMIT_CorrectedV3"
     dropColumns = ['sum_emission_auto', 'sum_emission_uncertainty_auto', 'Point_Count']
     
@@ -26,7 +26,7 @@ def extractFullSpectrum():
     
     nc = rasterio.open(rasterPath)
     
-    cafos = gpd.read_file(vectorPath, layer=vectorLayer)
+    cafos = gpd.read_file(vectorPath)
     
     # Extract polygon attributes
     attributes = cafos.drop(columns=['geometry']).copy()
@@ -37,7 +37,7 @@ def extractFullSpectrum():
     # Calculate zonal statistics for each band
     for band in range(1, numBands + 1):
         # Calculate zonal statistics for the current band
-        stats = zonal_stats(cafos, nc, band=band, stats=rasterStats)
+        stats = zonal_stats(cafos, rasterPath, band=band, stats=rasterStats)
         
         # Convert the stats to a DataFrame and add a column for the band
         stats_df = pd.DataFrame(stats)
@@ -53,9 +53,9 @@ def extractFullSpectrum():
     df_combined = pd.concat([attributes, df_bands], axis=1)
     
     #Drop extra columns
-    df_combined = df_combined.drop(columns=dropColumns)
+    #df_combined = df_combined.drop(columns=dropColumns)
     
-    df_combined.to_csv('bandMedians.csv', mode='x')
+    df_combined.to_csv('bandMedians.csv', mode='w')
     
     return df_combined
 
