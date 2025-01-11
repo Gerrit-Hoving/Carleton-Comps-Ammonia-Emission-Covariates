@@ -114,7 +114,7 @@ def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
     'Importance': clf.feature_importances_
     })
     
-    matrix = confusion_matrix(y_test, y_pred)
+    matrix = confusion_matrix(y_test, y_pred, labels=[0,1])
     
     if details:
         print("Random Forest Classification Results: ")
@@ -234,16 +234,18 @@ def graphRFClass(target, start, stop, step=1):
     plt.xlabel('n_estimators')                
     plt.ylabel('Accuracy')    
     
-def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, iterations = 100, mode='index'):
-    
+def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, df=None, iterations = 100, dimensionality = 'reduced'):
     rows= []
-    testValues = [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
+    #testValues = [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
     #testValues = [0.05, 0.1, 0.15, 0.2, 0.5]
-    #testValues = [0.2]
+    testValues = [0.2]
+    
+    if df is None:
+        df, targets, features = pullData()
     
     for test in testValues:
         for x in range(0, iterations, 1):
-            accuracy, r2, importance, matrix = randomForestClass(target, n_estimators, False, test, mode)
+            accuracy, r2, importance, matrix = randomForestClass(target, n_estimators, df, False)
             rows.append({'Index': x,
                      'Category': test,
                      'Accuracy': accuracy, 
@@ -327,7 +329,7 @@ def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, iterat
     
     
     # If set to index mode, make a bar chart for importances, else make a line graph
-    if mode == 'index':
+    if dimensionality == 'reduced':
         
         # Remove suffixes from index names
         pattern = r'_(median|mean|sum)$'
@@ -448,8 +450,10 @@ print(pca.singular_values_)
 
 reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 
-input_df = pd.concat([attributes_df['HyTES_NH3_Detect'], reduced_df], axis=1)
+input_df = pd.concat([attributes_df['HyTES_NH3_Detect'].reset_index(drop=True), reduced_df], axis=1)
 
 accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
+
+graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 1000, dimensionality='reduced')
 
 
