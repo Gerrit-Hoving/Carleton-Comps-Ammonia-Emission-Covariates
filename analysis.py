@@ -82,34 +82,24 @@ def randomForestReg(target, estimators, details=False, testSize=0.2, mode='index
         
     return r2, mse
 
-def randomForestClass(target, estimators, details=False, testSize=0.2, mode='bands'):
-    
-    df = pullData(mode)
-    
-    #target = 'CarbonMapper_CH4_Detect'
-    #df = df[df[target] != 0]
-    
-    dropColumns = ['CAFO_ID','Shape_Length','NH3_mean', 'NH3_sum', 'NH3_median', 'CH4_mean', 'CH4_sum', 'CH4_median', 'mean_emission_auto', 'mean_emission_uncertainty_auto', 'sum_emission_auto', 'sum_emission_uncertainty_auto', 'Point_Count', 'HyTES_NH3_Detect', 'HyTES_CH4_Detect', 'CarbonMapper_CH4_Detect'] 
+def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
+    if df is None:
+        df, targets, features = pullData()
+    else:
+        targets = target
     
     # Convert 'has_zero' to integer (0 or 1) for compatibility with RandomForest
     df[target] = df[target].astype(int)
     
     # Separate features and target
-    X = df.drop(columns=dropColumns)
-    if mode=='index':
-        X = X.drop(columns=['EMIT_mean', 'EMIT_sum', 'EMIT_median'])
-    
+    X = df.drop(columns=targets)
     y = df[target]
 
     # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, stratify=y)
     
     # Initialize the Random Forest Classifier
-    #clf = RandomForestClassifier(n_estimators=estimators, bootstrap=True, max_depth=30, min_samples_leaf=1, min_samples_split=2, random_state=42) #CH4 Indexes
-    #clf = RandomForestClassifier(n_estimators=estimators, bootstrap=True, max_depth=None, min_samples_leaf=8, min_samples_split=2, random_state=42) #NH3 Indexes
     clf = RandomForestClassifier(n_estimators=estimators, bootstrap=True, max_depth=None, min_samples_leaf=1, min_samples_split=2) #NH3 Bands
-    #clf = RandomForestClassifier(n_estimators=estimators, bootstrap=True, max_depth=None, min_samples_leaf=4, min_samples_split=2, random_state=42) #CH4 Bands
-    #clf = RandomForestClassifier(n_estimators=estimators, random_state=42)
     
     # Train the classifier
     clf.fit(X_train, y_train)
@@ -159,7 +149,6 @@ def randomForestClass(target, estimators, details=False, testSize=0.2, mode='ban
         graphFeatureImportance(featureImportance)
         
     return accuracy, r2, featureImportance, matrix
-
 
 def findParams(target, checkModel, mode='bands'):
 
@@ -435,22 +424,32 @@ def graphFeatureImportance(df):
 
 
 
-
-test_path = 'testExtracted.csv'
-test_df = pd.read_csv(test_path)
+### Testing RF on reduction of bands via PCA
+in_df, targets, features = pullData()
 
 # Drop bad bands
-clean_df = test_df.dropna(axis=1, how='all')
-clean_df.drop(clean_df.columns[0], axis=1, inplace=True)
+clean_df = in_df.dropna(axis=1, how='all')
+
+# Drop those bands from features list
+features = [item for item in clean_df.columns if item in features]
 
 # Drop empty rows
-clean_df.dropna(axis=0, how='any', inplace=True)
+clean_df = clean_df.dropna(axis=0, how='any')
+
+bands_df = clean_df[features]
+attributes_df = clean_df[targets]
 
 pca = PCA(n_components=10)
 
-pca.fit(clean_df)
+pca.fit(bands_df)
 
 print(pca.explained_variance_ratio_)
 print(pca.singular_values_)
 
-reduced_df = pca.fit_transform(clean_df)
+reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
+
+input_df = pd.concat([attributes_df['HyTES_NH3_Detect'], reduced_df], axis=1)
+
+accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
+
+
