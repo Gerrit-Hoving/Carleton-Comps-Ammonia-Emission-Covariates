@@ -10,6 +10,7 @@ Functions for extracting spectral data from EMIT and AVIRIS raster files
 from rasterstats import zonal_stats
 import pandas as pd
 import geopandas as gpd
+import numpy as np
 import rasterio
 import os
 
@@ -78,21 +79,26 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, stats = ['median']):
         dfs[list_name] = df
     
     # Concatenate all DataFrames horizontally (axis=1)
-    result_df = pd.concat(dfs.values(), axis=1)
+    full_df = pd.concat(dfs.values(), axis=1)
+    
+    median_df = pd.DataFrame()
+    full_df[full_df <= 0] = np.nan
     
     # Take the mean of the values for each band
-    median_df = pd.DataFrame()
-    
     for band in range(1, 286):
         # Create a list of columns that refer to the current band
-        band_columns = [col for col in result_df.columns if f'band_{band}' in col]
+        band_columns = [col for col in full_df.columns if f'band_{band}' in col]
         
         # Calculate the median of those columns and add it to the new DataFrame
-        median_df[f'reflectance_band_{band}_median'] = result_df[band_columns].median(axis=1)
-    
-    
+        median_df[f'reflectance_band_{band}_median'] = full_df[band_columns].median(axis=1)
+        
     return median_df
 
+
+def pullData():
+    
+    
+    return 0
 
 folder = r'D:\Documents\Projects\comps\data\process'
 vector = r'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_EMIT_WGS84.shp'
