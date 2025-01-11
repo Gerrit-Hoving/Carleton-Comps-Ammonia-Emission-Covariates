@@ -10,11 +10,19 @@ import pandas as pd
 
 test_path = 'testExtracted.csv'
 test_df = pd.read_csv(test_path)
+
+# Drop bad bands
+clean_df = test_df.dropna(axis=1, how='all')
+clean_df.drop(clean_df.columns[0], axis=1, inplace=True)
+
+# Drop empty rows
+clean_df.dropna(axis=0, how='any', inplace=True)
+
 pca = PCA(n_components=10)
 
-pca.fit(test_df)
+pca.fit(clean_df)
 
 print(pca.explained_variance_ratio_)
 print(pca.singular_values_)
 
-reduced_df = pca.fit_transform(test_df)
+reduced_df = pca.fit_transform(clean_df)
