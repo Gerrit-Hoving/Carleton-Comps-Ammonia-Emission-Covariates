@@ -71,7 +71,7 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, stats = ['median']):
         
     # Combine lists into a dictionary of DataFrames
     #rasterNames.insert(0, "CAFO")
-    dfs = []
+    dfs = {}
     for list_name, data in zip(rasterNames, results):
         # Create a DataFrame from the list of dictionaries
         df = pd.DataFrame(data)
@@ -130,7 +130,8 @@ def pullData(mode = 'EMIT'):
     
     return full_df, target_list, feature_list
 
-data, targets, features = pullData()
+#data, targets, features = pullData()
+
 
 folder = r'D:\Documents\Projects\comps\data\process'
 vector = r'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_EMIT_WGS84.shp'

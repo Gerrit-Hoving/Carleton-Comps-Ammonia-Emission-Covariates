@@ -454,6 +454,6 @@ input_df = pd.concat([attributes_df['HyTES_NH3_Detect'].reset_index(drop=True), 
 
 accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
 
-graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 1000, dimensionality='reduced')
+graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 100, dimensionality='reduced')
 
 
