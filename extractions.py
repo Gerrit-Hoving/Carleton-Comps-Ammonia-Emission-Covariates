@@ -26,13 +26,10 @@ aviris_bands_path = r'D:\Documents\Projects\comps\data\avirisReflectance.csv'
 def extractEMITByRaster(rasterPath, vectorPath, layer = None, rasterStats = ['median']):
     if layer is None:
         cafos = gpd.read_file(vectorPath) 
-        attributes = cafos.drop(columns=['geometry']).copy()
     else:
         cafos = fiona.open(vectorPath, layer=layer)
-        attributes = []
-        for feature in cafos:
-            attributes.append(fiona.model.to_dict(feature['properties']))
-        
+    
+    
     with rasterio.open(rasterPath) as inRaster:
         numBands = inRaster.count
 
@@ -55,12 +52,12 @@ def extractEMITByRaster(rasterPath, vectorPath, layer = None, rasterStats = ['me
     df_bands = pd.concat(band_results, axis=1)
     
     # Combine DataFrames
-    df_combined = pd.concat([attributes, df_bands], axis=1)
+    #df_combined = pd.concat([attributes, df_bands], axis=1)
     
     # Write to csv
-    df_combined.to_csv('bandMedians.csv', mode='w')
+    df_bands.to_csv('bandMedians.csv', mode='w')
     
-    return df_combined
+    return df_bands
 
 
 def extractAvgAcrossRasters(rasterFolder, vectorPath, layer = None, stats = ['median']):
@@ -91,7 +88,7 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, layer = None, stats = ['me
     full_df = pd.concat(dfs.values(), axis=1)
     
     median_df = pd.DataFrame()
-    full_df[full_df <= 0] = np.nan
+    full_df[full_df.select_dtypes(include=['number']) <= 0] = np.nan
     
     # Take the mean of the values for each band
     for band in range(1, 286):
@@ -139,7 +136,7 @@ def pullData(mode = 'EMIT'):
 #data, targets, features = pullData()
 
 
-folder = r'D:\Documents\Projects\comps\data\process'
+folder = r'D:\Documents\Projects\comps\data\process\test'
 vector = 'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_CARB.gpkg'
 layer = "CAFOs_Buffer45_WGS84"
 
