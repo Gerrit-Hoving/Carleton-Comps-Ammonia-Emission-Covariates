@@ -7,18 +7,28 @@ Created on Thu Jan  9 22:40:14 2025
 Functions for extracting spectral data from EMIT and AVIRIS raster files
 """
 
-from rasterstats import zonal_stats
 import pandas as pd
 import geopandas as gpd
 import numpy as np
+from rasterstats import zonal_stats
 import rasterio
 import os
 import fiona
 
+# File path parameters
+CARB_CAFOS_PATH = r'D:\Documents\Projects\comps\data\CAFOs_CARB_Atttributes.csv'
+CARB_EMISSION_PATH = r'D:\Documents\Projects\comps\data\CAFOs_CARB_Emissions.csv'
+CARB_EFACTOR_PATH = r'D:\Documents\Projects\comps\data\CAFOs_CARB_EmissionFactors.csv'
 
-# Output file paths
-emit_bands_avg_path = r'D:\Documents\Projects\comps\data\emitReflectance.csv'
-aviris_bands_path = r'D:\Documents\Projects\comps\data\avirisReflectance.csv'
+HYTES_CAFOS_PATH = r'D:\Documents\Projects\comps\data\cafoAttributes.csv'
+HYTES_NH3_PATH = r'D:\Documents\Projects\comps\data\cafoNH3Aerial.csv'
+
+HYTES_CAFOS_EMIT_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceHyTESLots.csv'
+HYTES_CAFOS_AVIRIS_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\avirisReflectanceHyTESLots.csv'
+CARB_CAFOS_EMIT_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLots.csv'
+CARB_CAFOS_AVIRIS_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\avirisReflectanceCARBLots.csv'
+
+
 
 # Uses zonal_stats to extract the specified stats from an orthorectified EMIT 
 # raster in ENVI format for each of the polygons in a given shapefile
@@ -28,7 +38,6 @@ def extractEMITByRaster(rasterPath, vectorPath, layer = None, rasterStats = ['me
         cafos = gpd.read_file(vectorPath) 
     else:
         cafos = fiona.open(vectorPath, layer=layer)
-    
     
     with rasterio.open(rasterPath) as inRaster:
         numBands = inRaster.count
@@ -51,12 +60,6 @@ def extractEMITByRaster(rasterPath, vectorPath, layer = None, rasterStats = ['me
     # Concatenate all band results along columns
     df_bands = pd.concat(band_results, axis=1)
     
-    # Combine DataFrames
-    #df_combined = pd.concat([attributes, df_bands], axis=1)
-    
-    # Write to csv
-    df_bands.to_csv('bandMedians.csv', mode='w')
-    
     return df_bands
 
 
@@ -73,7 +76,6 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, layer = None, stats = ['me
         results.append(zs)
         
     # Combine lists into a dictionary of DataFrames
-    #rasterNames.insert(0, "CAFO")
     dfs = {}
     for list_name, data in zip(rasterNames, results):
         # Create a DataFrame from the list of dictionaries
@@ -101,32 +103,49 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, layer = None, stats = ['me
     return median_df
 
 
-def pullData(mode = 'EMIT'):
-    nh3_path = r'D:\Documents\Projects\comps\data\cafoNH3Aerial.csv'
-    cafos_path = r'D:\Documents\Projects\comps\data\cafoAttributes.csv'
+def pullData(farms = 'CARB', mode = 'EMIT'):
+    if (farms == 'CARB'):
+        emission_df = pd.read_csv(CARB_EMISSION_PATH)
+        emission_df = emission_df.rename(columns={'CAFO': 'CAFO_ID'})
+        
+        factor_df = pd.read_csv(CARB_EFACTOR_PATH)
+        factor_df = factor_df.rename(columns={'Farm': 'CAFO_ID'})
+        
+        cafos_df = pd.read_csv(CARB_CAFOS_PATH)
+        cafos_df = cafos_df.rename(columns={'CARB_ID': 'CAFO_ID'})
+        
+        if(mode == 'EMIT'):
+            raster_df = pd.read_csv(CARB_CAFOS_EMIT_BANDAVG_PATH)
+            raster_df = pd.merge(cafos_df, raster_df, left_index = True, right_index = True)
+            raster_df = raster_df.drop(columns=['Unnamed: 0', 'Region'])
+            
+        target_df = pd.merge(emission_df, factor_df, on='CAFO_ID', how='left')
+        target_df = pd.merge(target_df, cafos_df, on='CAFO_ID', how='left')
+        target_df = target_df.fillna(0)
+        
+    elif (farms == 'HyTES'):
+        nh3_df = pd.read_csv(HYTES_NH3_PATH)
+        nh3_df = nh3_df.drop(columns=['Unnamed: 0'])
+        nh3_df = nh3_df.rename(columns={'Lot_CAFOID': 'CAFO_ID'})
     
-    nh3_df = pd.read_csv(nh3_path)
-    nh3_df = nh3_df.drop(columns=['Unnamed: 0'])
-    nh3_df = nh3_df.rename(columns={'Lot_CAFOID': 'CAFO_ID'})
-
-    cafos_df = pd.read_csv(cafos_path)
-    cafos_df = cafos_df.rename(columns={'ID': 'CAFO_ID'})
+        cafos_df = pd.read_csv(HYTES_CAFOS_PATH)
+        cafos_df = cafos_df.rename(columns={'ID': 'CAFO_ID'})
     
-    if(mode == 'EMIT'):
-        raster_df = pd.read_csv(emit_bands_avg_path)
-        raster_df = raster_df.rename(columns={'Unnamed: 0': 'CAFO_ID'})
-        raster_df['CAFO_ID'] = raster_df['CAFO_ID'] + 1
-        # Double checks to make sure nans set coreectly
-        raster_df[raster_df <= 0] = np.nan
-
-    # Combine CAFO attributes and NH3 emissions data to get feedlot data
-    target_df = pd.merge(cafos_df, nh3_df, on='CAFO_ID', how='left')
-    target_df = target_df.fillna(0)
-    target_df['HyTES_NH3_Detect'] = target_df['NH3_mean'] != 0
-    
+        if(mode == 'EMIT'):
+            raster_df = pd.read_csv(HYTES_CAFOS_EMIT_BANDAVG_PATH)
+            raster_df = raster_df.rename(columns={'Unnamed: 0': 'CAFO_ID'})
+            raster_df['CAFO_ID'] = raster_df['CAFO_ID'] + 1
+            # Double checks to make sure nans set coreectly
+            raster_df[raster_df <= 0] = np.nan
+            
+        # Combine CAFO attributes and NH3 emissions data to get feedlot data
+        target_df = pd.merge(cafos_df, nh3_df, on='CAFO_ID', how='left')
+        target_df = target_df.fillna(0)
+        target_df['HyTES_NH3_Detect'] = target_df['NH3_mean'] != 0
+        
     # Merge with raster data
     full_df = pd.merge(target_df, raster_df, on='CAFO_ID', how='left')
-    
+        
     # Create lists of targets and features for easier use with RF
     target_list = list(target_df.columns)
     feature_list = [item for item in full_df.columns if item not in target_list]
@@ -141,8 +160,8 @@ vector = 'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_CARB.gpkg'
 layer = "CAFOs_Buffer45_WGS84"
 
 
-df = extractAvgAcrossRasters(folder, vector, layer)
-df.to_csv(emit_bands_avg_path)
+#df = extractAvgAcrossRasters(folder, vector, layer)
+#df.to_csv(CARB_CAFOS_EMIT_BANDAVG_PATH)
 
 
 
