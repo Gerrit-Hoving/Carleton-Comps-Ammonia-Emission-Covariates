@@ -2,7 +2,7 @@
 """
 Created on Thu Jan  9 22:41:36 2025
 
-@author: Gerrit
+@author: Gerrit Hoving
 """
 
 
@@ -27,16 +27,14 @@ from sklearn.decomposition import PCA
 from extractions import pullData
 
 
-def randomForestReg(target, estimators, details=False, testSize=0.2, mode='index'):
-    
-    df = pullData(mode)
-    
-    #target = 'NH3_mean'
-    df = df[df[target] != 0]
-    dropColumns = ['CAFO_ID','NH3_mean', 'NH3_sum', 'NH3_median', 'CH4_mean', 'CH4_sum', 'CH4_median', 'mean_emission_auto', 'mean_emission_uncertainty_auto', 'sum_emission_auto', 'sum_emission_uncertainty_auto', 'Point_Count', 'HyTES_NH3_Detect', 'HyTES_CH4_Detect', 'CarbonMapper_CH4_Detect'] 
+def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
+    if df is None:
+        df, targets, features = pullData()
+    else:
+        targets = target
     
     # Separate features and target
-    X = df.drop(columns=dropColumns)
+    X = df.drop(columns=targets)
     y = df[target]
     
     # Split the data into training and test sets
@@ -450,10 +448,13 @@ print(pca.singular_values_)
 
 reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 
-input_df = pd.concat([attributes_df['HyTES_NH3_Detect'].reset_index(drop=True), reduced_df], axis=1)
+input_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
 
-accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
+#input_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), bands_df], axis=1)
 
-graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 100, dimensionality='reduced')
+randomForestReg('NH3 (kg/h)', 100, df=input_df, details=True, testSize=0.3)
+
+#accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
+#graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 100, dimensionality='reduced')
 
 
