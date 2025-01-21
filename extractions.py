@@ -13,6 +13,7 @@ import geopandas as gpd
 import numpy as np
 import rasterio
 import os
+import fiona
 
 
 # Output file paths
@@ -22,13 +23,18 @@ aviris_bands_path = r'D:\Documents\Projects\comps\data\avirisReflectance.csv'
 # Uses zonal_stats to extract the specified stats from an orthorectified EMIT 
 # raster in ENVI format for each of the polygons in a given shapefile
 
-def extractEMITByRaster(rasterPath, vectorPath, rasterStats = ['median']):
-    cafos = gpd.read_file(vectorPath)
+def extractEMITByRaster(rasterPath, vectorPath, layer = None, rasterStats = ['median']):
+    if layer is None:
+        cafos = gpd.read_file(vectorPath) 
+        attributes = cafos.drop(columns=['geometry']).copy()
+    else:
+        cafos = fiona.open(vectorPath, layer=layer)
+        attributes = []
+        for feature in cafos:
+            attributes.append(fiona.model.to_dict(feature['properties']))
+        
     with rasterio.open(rasterPath) as inRaster:
         numBands = inRaster.count
-    
-    # Extract polygon attributes
-    attributes = cafos.drop(columns=['geometry']).copy()
 
     # Initialize a DataFrame to store zonal statistics for each band
     band_results = []
@@ -57,7 +63,7 @@ def extractEMITByRaster(rasterPath, vectorPath, rasterStats = ['median']):
     return df_combined
 
 
-def extractAvgAcrossRasters(rasterFolder, vectorPath, stats = ['median']):
+def extractAvgAcrossRasters(rasterFolder, vectorPath, layer = None, stats = ['median']):
     allFiles = os.listdir(rasterFolder)
     rasterNames = [f for f in allFiles if os.path.isfile(os.path.join(rasterFolder, f)) and '.' not in f]
     rasterPaths = [os.path.join(rasterFolder, raster) for raster in rasterNames]
@@ -66,7 +72,7 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, stats = ['median']):
     
     # Work through every image in the rasters folder and calculate the zonal statistics for it
     for file in rasterPaths:
-        zs = extractEMITByRaster(file, vectorPath, rasterStats=stats)
+        zs = extractEMITByRaster(file, vector, layer, rasterStats=stats)
         results.append(zs)
         
     # Combine lists into a dictionary of DataFrames
@@ -134,10 +140,12 @@ def pullData(mode = 'EMIT'):
 
 
 folder = r'D:\Documents\Projects\comps\data\process'
-vector = r'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_EMIT_WGS84.shp'
+vector = 'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_CARB.gpkg'
+layer = "CAFOs_Buffer45_WGS84"
 
-#df = extractAvgAcrossRasters(folder, vector)
-#df.to_csv(emit_bands_avg_path)
+
+df = extractAvgAcrossRasters(folder, vector, layer)
+df.to_csv(emit_bands_avg_path)
 
 
 
