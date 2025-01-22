@@ -22,7 +22,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import GridSearchCV
-from sklearn.decomposition import PCA
+
 
 from extractions import pullData
 
@@ -79,6 +79,58 @@ def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
         
         
     return r2, mse
+
+def partialLeastSquaresReg(target, components, df = None, details=False, testSize=0.2):
+    if df is None:
+        df, targets, features = pullData()
+    else:
+        targets = target
+    
+    # Separate features and target
+    X = df.drop(columns=targets)
+    y = df[target]
+    
+    # Split the data into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, random_state=42)
+    
+    # Initialize the PLS Regression model
+    # n_components is the number of PLS components to use
+    pls_model = PLSRegression(n_components=components)
+    
+    # Fit the model to the training data
+    pls_model.fit(X_train, y_train)
+    
+    # Make predictions on the test data
+    y_pred = pls_model.predict(X_test)
+    
+    # Evaluate the model
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    if details:
+        print('\nPLS results: ')
+        print(f'Mean Squared Error: {mse:.2f}')
+        print(f'R-squared: {r2:.2f}')
+        print('PLS Coefficients:')
+        print(pls_model.coef_)
+        
+        plt.figure()
+        plt.scatter(y_test, y_pred)
+        plt.title("Partial Least Squares Regression Test: " + target)
+        plt.xlabel('Test ' + target)                
+        plt.ylabel('Predicted ' + target)
+        
+        # Calculate trendline and r2
+        slope, intercept, r_value, p_value, std_err = stats.linregress(y_test, y_pred)
+        trendline = slope * y_test + intercept
+        plt.plot(y_test, trendline, color='red')
+        r_squared = r_value**2
+        plt.text(0.8, 0.1, f'$R^2_s = {r_squared:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
+        plt.text(0.76, 0.01, f'$R^2 = {r2:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
+        
+        
+    return r2, mse, X, y
+    
 
 def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
     if df is None:
@@ -213,6 +265,18 @@ def graphRFEst(target, start, stop, step=1):
     plt.title('R2 vs n_estimators for Random Forest at test size = 0.2, HyTES NH3')    
     plt.xlabel('n_estimators')                
     plt.ylabel('R2')    
+    
+def graphPLSRComp(target, start, stop, step=1):
+    r2s = []
+    for n_components in range(start, stop, step):
+        r2, mse, X, y = partialLeastSquaresReg(target,n_components)
+        r2s.append(r2)
+        
+    plt.figure()
+    plt.scatter(range(start, stop, step), r2s)
+    plt.title('R2 vs n_components for PLSR at test size = 0.2, HyTES NH3')    
+    plt.xlabel('n_components')                
+    plt.ylabel('R2') 
      
 def graphRFClass(target, start, stop, step=1):
     r2s = []
@@ -391,6 +455,10 @@ def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, df=Non
     plt.tight_layout()
     plt.show()
     
+def graphRFRegStability():
+    return
+    
+    
 def graphFeatureImportance(df):
 
     # Plot Line Graph
@@ -421,44 +489,5 @@ def graphFeatureImportance(df):
     plt.show()
 
 
-
-### Testing RF on reduction of bands via PCA
-in_df, targets, features = pullData()
-
-# Drop bad bands
-clean_df = in_df.dropna(axis=1, how='all')
-
-# Drop those bands from features list
-features = [item for item in clean_df.columns if item in features]
-
-# Optionally drop rows without emission factors
-#clean_df = clean_df[clean_df['NH3 (g/head/h) Avg'] != 0]
-
-# Drop empty rows
-clean_df = clean_df.dropna(axis=0, how='any')
-
-bands_df = clean_df[features]
-attributes_df = clean_df[targets]
-
-pca = PCA(n_components=10)
-
-pca.fit(bands_df)
-
-print(pca.explained_variance_ratio_)
-print(pca.singular_values_)
-
-reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
-
-#input_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
-
-input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
-
-#randomForestReg('NH3 (kg/h)', 10, df=input_df, details=True, testSize=0.3)
-
-#findParams('NH3 (kg/h)', 'RFR', df=input_df)
-graphRFEst('NH3 (kg/h)', 1, 1000, 1)
-
-#accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
-#graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 100, dimensionality='reduced')
 
 

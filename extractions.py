@@ -155,7 +155,7 @@ def pullData(farms = 'CARB', mode = 'EMIT'):
 #data, targets, features = pullData()
 
 
-folder = r'D:\Documents\Projects\comps\data\process\test'
+folder = r'D:\Documents\Projects\comps\data\EMIT\processed\subset'
 vector = 'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_CARB.gpkg'
 layer = "CAFOs_Buffer45_WGS84"
 
