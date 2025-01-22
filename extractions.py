@@ -160,8 +160,8 @@ vector = 'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_CARB.gpkg'
 layer = "CAFOs_Buffer45_WGS84"
 
 
-#df = extractAvgAcrossRasters(folder, vector, layer)
-#df.to_csv(CARB_CAFOS_EMIT_BANDAVG_PATH)
+df = extractAvgAcrossRasters(folder, vector, layer)
+df.to_csv(CARB_CAFOS_EMIT_BANDAVG_PATH)
 
 
 

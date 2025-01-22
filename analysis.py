@@ -455,8 +455,36 @@ def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, df=Non
     plt.tight_layout()
     plt.show()
     
-def graphRFRegStability():
-    return
+def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iterations = 100, dimensionality = 'reduced'):
+    rows= []
+    #testValues = [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
+    testValues = [0.05, 0.1, 0.15, 0.2, 0.5]
+    #testValues = [0.2]
+    
+    if df is None:
+        df, targets, features = pullData()
+    
+    for test in testValues:
+        for x in range(0, iterations, 1):
+            r2, mse = randomForestReg(target, n_estimators, df, False)
+            rows.append({'Index': x,
+                     'Category': test,
+                     'R2': r2, 
+                     'MSE': mse})
+            
+
+    # Graph box plot of accuracy at different test values
+    df = pd.DataFrame(rows)
+    plt.figure()
+    plt.figure(figsize=(10, 8))
+    sns.set(font_scale=2.5)
+    sns.boxplot(x='Category', y='R2', data=df)
+    plt.title('Random Forest Regression Model Performance')
+    plt.xlabel('Proportion of Data Reserved for Testing')
+    plt.ylabel('Accuracy ($R^2$)')
+    plt.ylim(bottom=0, top=1)
+    plt.show()
+    
     
     
 def graphFeatureImportance(df):
