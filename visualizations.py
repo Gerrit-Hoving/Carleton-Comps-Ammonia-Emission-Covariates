@@ -4,7 +4,7 @@ Created on Wed Jan 22 15:52:33 2025
 
 @author: Gerrit Hoving
 
-Code for testing analysis and eventually replicating figures
+Code for running analysis and eventually replicating figures
 """
 
 import pandas as pd
@@ -53,13 +53,13 @@ input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 #randomForestReg('NH3 (kg/h)', 10, df=input_df, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
-graphPLSRComp('NH3 (kg/h)', 5, 100, 1)
+#graphPLSRComp('NH3 (kg/h)', 5, 100, 1)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
 #graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 100, dimensionality='reduced')
 
 ### Decent figures
 
-#graphRFEst('NH3 (kg/h)', 5, 300, 1)
+graphRFEst('NH3 (kg/h)', 5, 300, 1)
 
 

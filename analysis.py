@@ -3,8 +3,10 @@
 Created on Thu Jan  9 22:41:36 2025
 
 @author: Gerrit Hoving
-"""
 
+Functions for implementing RF regression and classification and PLSR, along 
+with benchmarking of these models
+"""
 
 import pandas as pd
 import numpy as np
@@ -21,8 +23,8 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import d2_absolute_error_score, mean_gamma_deviance, mean_absolute_percentage_error
 from sklearn.model_selection import GridSearchCV
-
 
 from extractions import pullData
 
@@ -52,6 +54,9 @@ def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
     # Evaluate the model
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
+    d2 = d2_absolute_error_score(y_test, y_pred)
+    gamma_dev = mean_gamma_deviance(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
     
     if details:
         print('\nRandom forest results: ')
@@ -78,7 +83,7 @@ def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
         plt.text(0.76, 0.01, f'$R^2 = {r2:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
         
         
-    return r2, mse
+    return r2, mse, d2, gamma_dev, mape
 
 def partialLeastSquaresReg(target, components, df = None, details=False, testSize=0.2):
     if df is None:
@@ -106,6 +111,9 @@ def partialLeastSquaresReg(target, components, df = None, details=False, testSiz
     # Evaluate the model
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
+    d2 = d2_absolute_error_score(y_test, y_pred)
+    gamma_dev = mean_gamma_deviance(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
     
     if details:
         print('\nPLS results: ')
@@ -129,7 +137,7 @@ def partialLeastSquaresReg(target, components, df = None, details=False, testSiz
         plt.text(0.76, 0.01, f'$R^2 = {r2:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
         
         
-    return r2, mse, X, y
+    return r2, mse, d2, gamma_dev, mape
     
 
 def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
@@ -466,11 +474,14 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     
     for test in testValues:
         for x in range(0, iterations, 1):
-            r2, mse = randomForestReg(target, n_estimators, df, False)
+            r2, mse, d2, gamma_dev, mape = randomForestReg(target, n_estimators, df, False)
             rows.append({'Index': x,
                      'Category': test,
                      'R2': r2, 
-                     'MSE': mse})
+                     'MSE': mse,
+                     'D2 Score': d2,
+                     'Mean Gamma Deviance': gamma_dev,
+                     'MAPE': mape})
             
 
     # Graph box plot of accuracy at different test values
