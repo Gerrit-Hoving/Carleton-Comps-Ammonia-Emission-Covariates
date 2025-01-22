@@ -148,13 +148,12 @@ def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
         
     return accuracy, r2, featureImportance, matrix
 
-def findParams(target, checkModel, mode='bands'):
+def findParams(target, checkModel, df = None):
+    if df is None:
+        df, targets, features = pullData()
+    else:
+        targets = target
 
-    df = pullData(mode)
-    #print(df.columns)
-    
-    dropColumns = ['CAFO_ID','NH3_mean', 'NH3_sum', 'NH3_median', 'CH4_mean', 'CH4_sum', 'CH4_median', 'mean_emission_auto', 'mean_emission_uncertainty_auto', 'sum_emission_auto', 'sum_emission_uncertainty_auto', 'Point_Count', 'HyTES_NH3_Detect', 'HyTES_CH4_Detect', 'CarbonMapper_CH4_Detect'] 
-    
     # Define the model
     if checkModel == 'RFC': 
         model = RandomForestClassifier(random_state=42)
@@ -174,12 +173,11 @@ def findParams(target, checkModel, mode='bands'):
         return None
     
     # Separate features and target
-    X = df.drop(columns=dropColumns)
+    X = df.drop(columns=targets)
     y = df[target]
     
     # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     
     # Define the parameter grid
     param_grid = {
@@ -192,7 +190,7 @@ def findParams(target, checkModel, mode='bands'):
     
     # Set up GridSearchCV
     grid_search = GridSearchCV(estimator=model, param_grid=param_grid, 
-                               cv=5,  # Number of cross-validation folds
+                               cv=3,  # Number of cross-validation folds
                                scoring=scoreMet,  # Evaluation metric
                                n_jobs=-1,  # Use all available cores
                                verbose=1)  # Verbosity level
@@ -207,7 +205,7 @@ def findParams(target, checkModel, mode='bands'):
 def graphRFEst(target, start, stop, step=1):
     r2s = []
     for n_estimators in range(start, stop, step):
-        r2, mse = randomForestReg(target,n_estimators)
+        r2, mse = randomForestReg(target, n_estimators)
         r2s.append(r2)
         
     plt.figure()
@@ -433,6 +431,9 @@ clean_df = in_df.dropna(axis=1, how='all')
 # Drop those bands from features list
 features = [item for item in clean_df.columns if item in features]
 
+# Optionally drop rows without emission factors
+#clean_df = clean_df[clean_df['NH3 (g/head/h) Avg'] != 0]
+
 # Drop empty rows
 clean_df = clean_df.dropna(axis=0, how='any')
 
@@ -448,11 +449,14 @@ print(pca.singular_values_)
 
 reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 
-input_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
+#input_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
 
-#input_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), bands_df], axis=1)
+input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 
-randomForestReg('NH3 (kg/h)', 100, df=input_df, details=True, testSize=0.3)
+#randomForestReg('NH3 (kg/h)', 10, df=input_df, details=True, testSize=0.3)
+
+#findParams('NH3 (kg/h)', 'RFR', df=input_df)
+graphRFEst('NH3 (kg/h)', 1, 1000, 1)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
 #graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 100, dimensionality='reduced')
