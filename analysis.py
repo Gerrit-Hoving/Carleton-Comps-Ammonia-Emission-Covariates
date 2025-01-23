@@ -85,7 +85,7 @@ def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
         
     return r2, mse, d2, gamma_dev, mape
 
-def partialLeastSquaresReg(target, components, df = None, details=False, testSize=0.2):
+def partialLeastSquaresReg(target, components, df = None, details=False, testSize=0.3):
     if df is None:
         df, targets, features = pullData()
     else:
@@ -138,6 +138,7 @@ def partialLeastSquaresReg(target, components, df = None, details=False, testSiz
         
         
     return r2, mse, d2, gamma_dev, mape
+    #return r2, mse, d2, mape
     
 
 def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
@@ -265,19 +266,19 @@ def findParams(target, checkModel, df = None):
 def graphRFEst(target, start, stop, step=1):
     r2s = []
     for n_estimators in range(start, stop, step):
-        r2, mse = randomForestReg(target, n_estimators)
+        r2, mse, d2, gamma_dev, mape = randomForestReg(target, n_estimators)
         r2s.append(r2)
         
     plt.figure()
     plt.scatter(range(start, stop, step), r2s)
-    plt.title('R2 vs n_estimators for Random Forest at test size = 0.2, HyTES NH3')    
+    plt.title('R2 vs n_estimators for Random Forest at test size = 0.3, CARB NH3')    
     plt.xlabel('n_estimators')                
     plt.ylabel('R2')    
     
 def graphPLSRComp(target, start, stop, step=1):
     r2s = []
     for n_components in range(start, stop, step):
-        r2, mse, X, y = partialLeastSquaresReg(target,n_components)
+        r2, mse, d2, gamma_dev, mape = partialLeastSquaresReg(target, n_components)
         r2s.append(r2)
         
     plt.figure()

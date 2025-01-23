@@ -26,6 +26,7 @@ HYTES_NH3_PATH = r'D:\Documents\Projects\comps\data\cafoNH3Aerial.csv'
 HYTES_CAFOS_EMIT_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceHyTESLots.csv'
 HYTES_CAFOS_AVIRIS_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\avirisReflectanceHyTESLots.csv'
 CARB_CAFOS_EMIT_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLots.csv'
+CARB_CAFOS_EMIT_ALL_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLotsComplete.csv'
 CARB_CAFOS_AVIRIS_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\avirisReflectanceCARBLots.csv'
 
 
@@ -100,7 +101,7 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, layer = None, stats = ['me
         # Calculate the median of those columns and add it to the new DataFrame
         median_df[f'reflectance_band_{band}_median'] = full_df[band_columns].median(axis=1)
         
-    return median_df
+    return median_df, full_df
 
 
 def pullData(farms = 'CARB', mode = 'EMIT'):
@@ -117,11 +118,15 @@ def pullData(farms = 'CARB', mode = 'EMIT'):
         if(mode == 'EMIT'):
             raster_df = pd.read_csv(CARB_CAFOS_EMIT_BANDAVG_PATH)
             raster_df = pd.merge(cafos_df, raster_df, left_index = True, right_index = True)
-            raster_df = raster_df.drop(columns=['Unnamed: 0', 'Region'])
+            raster_df = raster_df.drop(columns=['Unnamed: 0'])
+            
+            # Perfrom one-hot encoding on region variable for RF compatability 
+            raster_df = pd.get_dummies(raster_df, columns=['Region'])
             
         target_df = pd.merge(emission_df, factor_df, on='CAFO_ID', how='left')
         target_df = pd.merge(target_df, cafos_df, on='CAFO_ID', how='left')
         target_df = target_df.fillna(0)
+        target_df = target_df.drop(columns=['Region'])
         
     elif (farms == 'HyTES'):
         nh3_df = pd.read_csv(HYTES_NH3_PATH)
@@ -160,8 +165,9 @@ vector = 'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_CARB.gpkg'
 layer = "CAFOs_Buffer45_WGS84"
 
 
-df = extractAvgAcrossRasters(folder, vector, layer)
+df, full_df = extractAvgAcrossRasters(folder, vector, layer)
 df.to_csv(CARB_CAFOS_EMIT_BANDAVG_PATH)
+full_df.to_csv(CARB_CAFOS_EMIT_ALL_PATH)
 
 
 

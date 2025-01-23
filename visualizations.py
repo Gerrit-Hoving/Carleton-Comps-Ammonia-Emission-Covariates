@@ -10,7 +10,7 @@ Code for running analysis and eventually replicating figures
 import pandas as pd
 from sklearn.decomposition import PCA
 
-from analysis import randomForestReg
+from analysis import randomForestReg, partialLeastSquaresReg
 from analysis import graphRFRegStability
 from analysis import graphRFEst
 from analysis import graphPLSRComp
@@ -50,16 +50,18 @@ reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 
 input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 
-#randomForestReg('NH3 (kg/h)', 10, df=input_df, details=True, testSize=0.3)
+randomForestReg('NH3 (kg/h)', 300, df=input_df, details=True, testSize=0.3)
+#partialLeastSquaresReg('NH3 (kg/h)', 6, df=input_df, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
 #graphPLSRComp('NH3 (kg/h)', 5, 100, 1)
+#graphRFEst('NH3 (kg/h)', 5, 200, 1)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
 #graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 100, dimensionality='reduced')
 
 ### Decent figures
 
-graphRFEst('NH3 (kg/h)', 5, 300, 1)
+#graphRFEst('NH3 (kg/h)', 5, 300, 1)
 
 
