@@ -27,6 +27,8 @@ HYTES_CAFOS_EMIT_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\emitReflectan
 HYTES_CAFOS_AVIRIS_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\avirisReflectanceHyTESLots.csv'
 CARB_CAFOS_EMIT_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLots.csv'
 CARB_CAFOS_EMIT_ALL_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLotsComplete.csv'
+CARB_CAFOS_EMIT_SUBSET_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLotsSubset.csv'
+CARB_CAFOS_EMIT_RAD_PATH = r'D:\Documents\Projects\comps\data\emitRadianceCARBLots.csv'
 CARB_CAFOS_AVIRIS_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\avirisReflectanceCARBLots.csv'
 
 
@@ -104,7 +106,7 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, layer = None, stats = ['me
     return median_df, full_df
 
 
-def pullData(farms = 'CARB', mode = 'EMIT'):
+def pullData(farms = 'CARB', mode = 'EMIT', file = CARB_CAFOS_EMIT_SUBSET_PATH):
     if (farms == 'CARB'):
         emission_df = pd.read_csv(CARB_EMISSION_PATH)
         emission_df = emission_df.rename(columns={'CAFO': 'CAFO_ID'})
@@ -116,7 +118,7 @@ def pullData(farms = 'CARB', mode = 'EMIT'):
         cafos_df = cafos_df.rename(columns={'CARB_ID': 'CAFO_ID'})
         
         if(mode == 'EMIT'):
-            raster_df = pd.read_csv(CARB_CAFOS_EMIT_BANDAVG_PATH)
+            raster_df = pd.read_csv(file)
             raster_df = pd.merge(cafos_df, raster_df, left_index = True, right_index = True)
             raster_df = raster_df.drop(columns=['Unnamed: 0'])
             
@@ -165,9 +167,9 @@ vector = 'D:\Documents\Projects\comps\data\Shapefiles\CAFOs_CARB.gpkg'
 layer = "CAFOs_Buffer45_WGS84"
 
 
-df, full_df = extractAvgAcrossRasters(folder, vector, layer)
-df.to_csv(CARB_CAFOS_EMIT_BANDAVG_PATH)
-full_df.to_csv(CARB_CAFOS_EMIT_ALL_PATH)
+#df, full_df = extractAvgAcrossRasters(folder, vector, layer)
+#df.to_csv(CARB_CAFOS_EMIT_SUBSET_PATH)
+#full_df.to_csv(CARB_CAFOS_EMIT_ALL_PATH)
 
 
 

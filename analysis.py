@@ -40,7 +40,7 @@ def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
     y = df[target]
     
     # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize)
     
     # Initialize the Random Forest Regressor
     model = RandomForestRegressor(n_estimators=estimators, bootstrap=True, min_samples_leaf=1, min_samples_split=2)
@@ -55,8 +55,12 @@ def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
     d2 = d2_absolute_error_score(y_test, y_pred)
-    gamma_dev = mean_gamma_deviance(y_test, y_pred)
     mape = mean_absolute_percentage_error(y_test, y_pred)
+    
+    featureImportance = pd.DataFrame({
+    'Feature': X.columns,
+    'Importance': model.feature_importances_
+    })
     
     if details:
         print('\nRandom forest results: ')
@@ -82,8 +86,9 @@ def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
         plt.text(0.8, 0.1, f'$R^2_s = {r_squared:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
         plt.text(0.76, 0.01, f'$R^2 = {r2:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
         
+        graphFeatureImportance(featureImportance)
         
-    return r2, mse, d2, gamma_dev, mape
+    return r2, mape, featureImportance
 
 def partialLeastSquaresReg(target, components, df = None, details=False, testSize=0.3):
     if df is None:
@@ -96,7 +101,7 @@ def partialLeastSquaresReg(target, components, df = None, details=False, testSiz
     y = df[target]
     
     # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testSize)
     
     # Initialize the PLS Regression model
     # n_components is the number of PLS components to use
@@ -112,7 +117,6 @@ def partialLeastSquaresReg(target, components, df = None, details=False, testSiz
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
     d2 = d2_absolute_error_score(y_test, y_pred)
-    gamma_dev = mean_gamma_deviance(y_test, y_pred)
     mape = mean_absolute_percentage_error(y_test, y_pred)
     
     if details:
@@ -137,8 +141,8 @@ def partialLeastSquaresReg(target, components, df = None, details=False, testSiz
         plt.text(0.76, 0.01, f'$R^2 = {r2:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
         
         
-    return r2, mse, d2, gamma_dev, mape
-    #return r2, mse, d2, mape
+    #return r2, mse, d2, gamma_dev, mape
+    return r2, mse, d2, mape
     
 
 def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
@@ -263,10 +267,10 @@ def findParams(target, checkModel, df = None):
     print("Best Parameters:", grid_search.best_params_)
     print("Best Score:", grid_search.best_score_)
 
-def graphRFEst(target, start, stop, step=1):
+def graphRFEst(target, start, stop, step=1, df=None):
     r2s = []
     for n_estimators in range(start, stop, step):
-        r2, mse, d2, gamma_dev, mape = randomForestReg(target, n_estimators)
+        r2, mse, d2, mape = randomForestReg(target, n_estimators, df)
         r2s.append(r2)
         
     plt.figure()
@@ -278,7 +282,7 @@ def graphRFEst(target, start, stop, step=1):
 def graphPLSRComp(target, start, stop, step=1):
     r2s = []
     for n_components in range(start, stop, step):
-        r2, mse, d2, gamma_dev, mape = partialLeastSquaresReg(target, n_components)
+        r2, mse, d2, mape = partialLeastSquaresReg(target, n_components)
         r2s.append(r2)
         
     plt.figure()
@@ -467,7 +471,7 @@ def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, df=Non
 def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iterations = 100, dimensionality = 'reduced'):
     rows= []
     #testValues = [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
-    testValues = [0.05, 0.1, 0.15, 0.2, 0.5]
+    testValues = [0.1, 0.2, 0.3, 0.5, 0.7, 0.9]
     #testValues = [0.2]
     
     if df is None:
@@ -475,14 +479,12 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     
     for test in testValues:
         for x in range(0, iterations, 1):
-            r2, mse, d2, gamma_dev, mape = randomForestReg(target, n_estimators, df, False)
+            r2, mape, importance = randomForestReg(target, n_estimators, df, False, testSize=test)
             rows.append({'Index': x,
                      'Category': test,
                      'R2': r2, 
-                     'MSE': mse,
-                     'D2 Score': d2,
-                     'Mean Gamma Deviance': gamma_dev,
-                     'MAPE': mape})
+                     'MAPE': mape,
+                     'Importance': importance})
             
 
     # Graph box plot of accuracy at different test values
@@ -494,7 +496,63 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     plt.title('Random Forest Regression Model Performance')
     plt.xlabel('Proportion of Data Reserved for Testing')
     plt.ylabel('Accuracy ($R^2$)')
-    plt.ylim(bottom=0, top=1)
+    plt.ylim(bottom=-2, top=1)
+    plt.show()
+    
+    # Get importance values and statistics
+    imp_df = pd.DataFrame()
+    for row in rows:
+        if row['Category'] == 0.2:
+            imp_values = row['Importance']['Importance'].values
+            features = row['Importance']['Feature']
+            
+            imps_as_row = pd.DataFrame([imp_values], columns=features)
+            imp_df = pd.concat([imp_df, imps_as_row], ignore_index=True)
+
+    mean_values = imp_df.mean()
+    std_values = imp_df.std()
+    
+    # Combine means and standard deviations into a DataFrame
+    stats_df = pd.DataFrame({
+        'Mean': mean_values,
+        'Std Dev': std_values
+    })
+    
+    stats_df = stats_df * 100
+    
+    stats_df = stats_df.reset_index()
+    stats_df.columns = ['Band Number', 'Mean', 'Std Dev']
+    
+    plt.figure(figsize=(10, 8))
+    sns.set(font_scale=1.5)
+    
+    # Line plot for mean with ±1 standard deviation
+    stats_df = stats_df.iloc[:-1]
+    
+    sns.lineplot(data=stats_df, x=stats_df.index, y='Mean', label='Mean', marker='o', color='b')
+    plt.fill_between(stats_df.index, stats_df['Mean'] - stats_df['Std Dev'], stats_df['Mean'] + stats_df['Std Dev'], color='b', alpha=0.2, label='±1 Std Dev')
+    
+    # Add smoothed line (LOWESS)
+    lowess = sm.nonparametric.lowess
+    print(stats_df.index)
+    smooth = lowess(stats_df['Mean'], stats_df.index, frac=0.05)
+    plt.plot(stats_df.index, smooth[:, 1], color='red', label='Smoothed')
+    
+    plt.title('Importance vs Band Name')
+    plt.xticks(ticks=[0, len(stats_df)-1], labels=['380', '2500'])
+    plt.xlabel('Wavelength (nm)')
+    
+    # Set the minimum y-axis value to 0
+    plt.ylim(bottom=0)
+    plt.gca().yaxis.set_major_formatter(ticker.PercentFormatter())
+    
+    # Add plot title and labels
+    plt.title('Mean Importance and ±1 Standard Deviation')
+    plt.xlabel('Wavelength')
+    plt.ylabel('Average Importance, ' + str(iterations) + ' models')
+    plt.legend()
+    
+    plt.tight_layout()
     plt.show()
     
     
@@ -502,10 +560,10 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
 def graphFeatureImportance(df):
 
     # Plot Line Graph
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(12, 6))
     sns.set(font_scale=1.5)
-    '''
-    plt.subplot(1, 2, 1)  # (rows, cols, panel number)
+    
+    #plt.subplot(1, 2, 1)  # (rows, cols, panel number)
     sns.lineplot(x='Feature', y='Importance', data=df, marker='o')
     
     # Add smoothed line (LOWESS)
@@ -523,10 +581,12 @@ def graphFeatureImportance(df):
     #plt.subplot(1, 2, 2)
     sns.barplot(x='Importance', y='Feature', data=top_10_df, palette='viridis')
     plt.title('Top 10 Importance Values')
-    
+    '''
     # Adjust layout
-    plt.tight_layout()
+    #plt.tight_layout()
     plt.show()
+    
+    
 
 
 

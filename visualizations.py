@@ -50,15 +50,17 @@ reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 
 input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 
-randomForestReg('NH3 (kg/h)', 300, df=input_df, details=True, testSize=0.3)
-#partialLeastSquaresReg('NH3 (kg/h)', 6, df=input_df, details=True, testSize=0.3)
+input_df = input_df.iloc[:-3]
+
+#randomForestReg('NH3 (kg/h)', 300, df=input_df, details=True, testSize=0.3)
+#partialLeastSquaresReg('NH3 (kg/h)', 8, df=input_df, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
 #graphPLSRComp('NH3 (kg/h)', 5, 100, 1)
-#graphRFEst('NH3 (kg/h)', 5, 200, 1)
+#graphRFEst('NH3 (kg/h)', 5, 500, 5, input_df)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
-#graphRFClassStability('HyTES_NH3_Detect', 50, df=input_df, iterations = 100, dimensionality='reduced')
+graphRFRegStability('NH3 (kg/h)', 200, df=input_df, iterations = 1000, dimensionality='reduced')
 
 ### Decent figures
 
