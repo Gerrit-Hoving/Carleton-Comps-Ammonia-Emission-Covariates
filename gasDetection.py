@@ -68,14 +68,15 @@ def load_raster(file_path):
         raster_data = src.read()  # Returns an array (bands, rows, cols)
         transform = src.transform
         crs = src.crs
-        return raster_data, transform, crs
+        meta = src.meta
+        return raster_data, transform, crs, meta
 
 
 # File paths (replace these with your actual file paths)
 raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  # Hyperspectral raster with 285 bands
 
 # Load the raster data
-raster_data, transform, crs = load_raster(raster_file)
+raster_data, transform, crs, meta = load_raster(raster_file)
 
 # Apply the matched filter to get the concentration map
 concentration_map = np.zeros((raster_data.shape[1], raster_data.shape[2]))
@@ -92,13 +93,42 @@ for row in range(raster_data.shape[1]):
         # Perform the matched filter - dot product between the spectrum and the absorption coefficients
         matched_filter = np.dot(spectrum, coef)  # We assume both spectrum and coef have the same shape
         
+        matched_filter = matched_filter if matched_filter > (10^(-20)) else 0
+        
         # Calculate concentration (you can modify this calculation based on the Beer-Lambert Law)
         # Simplified: assuming direct proportionality between matched filter and concentration
         concentration_map[row, col] = matched_filter
+
 
 # Visualize the concentration map (e.g., for a particular row/column)
 plt.figure()
 plt.imshow(concentration_map, cmap='viridis')
 plt.colorbar(label='Concentration')
 plt.title('Concentration Map')
+
+plt.savefig('interpolated_absorption_coefficients.tif', format='tiff', dpi=800)
 plt.show()
+
+
+threshold = 8e-21
+new_array = np.where(concentration_map < threshold, 0, concentration_map)
+plt.figure()
+plt.imshow(new_array, cmap='viridis')
+plt.colorbar(label='Concentration')
+plt.title('Concentration Map')
+
+plt.savefig('interpolated_absorption_coefficients_threshold.tif', format='tiff', dpi=800)
+plt.show()
+
+
+
+### Save to geotiff
+
+# Update the metadata for the output file
+meta.update({
+    'count': 1,  # Single band (grayscale image)
+    'dtype': 'float32',  # Data type for concentration map
+})
+with rasterio.open('concentration_map.tif', 'w', **meta) as dst:
+    dst.write(concentration_map.astype('float32'), 1)  # Write the data to the first band
+
