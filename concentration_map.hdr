@@ -13,5 +13,3 @@ map info = {Geographic Lat/Lon, 1, 1, -119.642255099527, 36.5000583469397, 0.000
 coordinate system string = {GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]}
 band names = {
 Band 1}
-data offset values = {0}
-data gain values = {1}

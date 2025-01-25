@@ -12,13 +12,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from osgeo import gdal
 import rasterio
+from scipy.linalg import norm, inv
 
 
 db_begin('../data/HITRAN')
 
 #fetch('NH3',11,1,4000,27000)
 
-nu,coef = hapi.absorptionCoefficient_Lorentz(SourceTables='NH3', Diluent={'air':1.0})
+nu,coef = hapi.absorptionCoefficient_Lorentz(SourceTables='NH3', Diluent={'air':1.0}, Environment = {'p':0.98,'T':305},)
 
 plt.plot(nu,coef)
 
@@ -92,6 +93,8 @@ for row in range(raster_data.shape[1]):
         
         # Perform the matched filter - dot product between the spectrum and the absorption coefficients
         matched_filter = np.dot(spectrum, coef)  # We assume both spectrum and coef have the same shape
+        #matched_filter = ((spectrum-mu).dot(Cinv.dot(coef)))/(coef.dot(Cinv.dot(coef)))
+        
         
         matched_filter = matched_filter if matched_filter > (10^(-20)) else 0
         
@@ -100,7 +103,39 @@ for row in range(raster_data.shape[1]):
         concentration_map[row, col] = matched_filter
 
 
-# Visualize the concentration map (e.g., for a particular row/column)
+
+
+#### Matched filter implementation from isofit tutorials
+rows, cols, bands = 2018,2239,285
+
+mm = np.memmap(raster_file, dtype=np.float32, mode='r', shape=(rows, cols, bands))
+#mm = raster_data
+X = np.asarray(mm).copy()
+
+X = X.reshape(rows, cols, bands)
+
+# A subset of pixels is sufficient, say one out of every 100
+subset = np.arange(0,X.shape[0],100)
+Xsub = X[subset,:]
+#Xsub = Xsub[~np.isnan(Xsub).any(axis=1)]
+mu = Xsub.mean(axis=0)
+
+# Calculate the covariance
+Cov = np.cov(Xsub, rowvar=False);
+
+Cinv = inv(Cov + np.eye(len(nu))*1e-8)
+mf = ((X-mu).dot(Cinv.dot(coef)))/(coef.dot(Cinv.dot(coef)))
+
+mf = mf.reshape(rows, cols)
+plt.imshow(mf * 10000.0)
+plt.colorbar()
+plt.clim([0,200])
+plt.title('NH3 plume (ppm m)')
+plt.imsave('MF2.png',mf*10000.0)
+
+
+
+#### Visualize the concentration map (e.g., for a particular row/column)
 plt.figure()
 plt.imshow(concentration_map, cmap='viridis')
 plt.colorbar(label='Concentration')
@@ -119,7 +154,6 @@ plt.title('Concentration Map')
 
 plt.savefig('interpolated_absorption_coefficients_threshold.tif', format='tiff', dpi=800)
 plt.show()
-
 
 
 ### Save to geotiff
