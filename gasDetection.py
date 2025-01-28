@@ -18,8 +18,10 @@ from skimage import exposure
 import seaborn as sns
 import hvplot
 import hvplot.xarray
+import hvplot.pandas
 from emit_tools import emit_xarray
 import pandas as pd
+import holoviews as hv
 
 
 db_begin('../data/HITRAN')
@@ -80,8 +82,8 @@ def load_raster(file_path):
         return raster_data, transform, crs, meta
 
 
-# File paths (replace these with your actual file paths)
-raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  # Hyperspectral raster with 285 bands
+# File paths 
+raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
 
 # Load the raster data
 raster_data, transform, crs, meta = load_raster(raster_file)
@@ -89,7 +91,7 @@ raster_data, transform, crs, meta = load_raster(raster_file)
 # Apply the matched filter to get the concentration map
 concentration_map = np.zeros((raster_data.shape[1], raster_data.shape[2]))
     
-# Loop through each pixel (each pixel has a spectrum across bands)
+# Loop through each pixel 
 for row in range(raster_data.shape[1]):
     for col in range(raster_data.shape[2]):
         # Extract the spectrum for this pixel
@@ -178,25 +180,12 @@ with rasterio.open('concentration_map_ch4.tif', 'w', **meta) as dst:
 
 
 
-
 ### Visualize in/out of plume spectra
+raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
 
+rad = emit_xarray(raster_path, ortho=True)
 
-
-rad = emit_xarray(raster_file, ortho=True)
-
-#In manure pond
-#points = pd.DataFrame([{"ID": 0, "latitude": 35.167664437574814, "longitude": -119.10087986567486}, {"ID": 1, "latitude": 35.1676775784815, "longitude": -119.09837215132448}])
-# In hills
-points = pd.DataFrame([{"ID": 0, "latitude": 35.31848809204527, "longitude": -119.42502781410386}, {"ID": 1, "latitude": 35.31897748845836, "longitude": -119.42502800538341}])
-#Feedlot surface, accounting for wind
-#points = pd.DataFrame([{"ID": 0, "latitude": 35.16709534468988, "longitude": -119.09588385907719}, {"ID": 1, "latitude": 35.17023191518769, "longitude": -119.09584450552866}])
-#Feedlot surface 2, accounting for wind
-#points = pd.DataFrame([{"ID": 0, "latitude": 35.17118076215722, "longitude": -119.10268430272738}, {"ID": 1, "latitude": 35.17202346329284, "longitude": -119.10853490784534}])
-#Western Sky Dairy
-#points = pd.DataFrame([{"ID": 0, "latitude": 35.18950382181828, "longitude": -119.11785339563848}, {"ID": 1, "latitude": 35.19335877937062, "longitude": -119.11997608881786}])
-#T&W Farms
-#points = pd.DataFrame([{"ID": 0, "latitude": 35.191961378381194, "longitude": -119.10283239289654}, {"ID": 1, "latitude": 35.19367198662642, "longitude": -119.10701881555586}])
+points = pd.DataFrame([{"ID": 0, "latitude": 36.2286746, "longitude": -119.1756712}, {"ID": 1, "latitude": 36.2279773, "longitude": -119.1756845}])
 
 
 points = points.set_index(['ID'])
@@ -227,6 +216,7 @@ sns.lineplot(
     marker='o'  # Optional: add markers to lines
 )
 
+
 # Add titles and labels
 plt.title('Radiance Spectra, ID 0 is in-plume')
 plt.xlabel('Wavelength (nm)')
@@ -254,10 +244,11 @@ sns.lineplot(
     marker='o'  # Optional: add markers to lines
 )
 
+
 # Add titles and labels
-plt.title('In Plume/Out of Plume Ratio - Hills')
+plt.title('In Plume/Out of Plume Ratio')
 plt.xlabel('Wavelength (nm)')
-plt.xlim(1700, 2400)
+plt.xlim(1400, 2500)
 plt.ylabel('In Plume/Out of Plume Ratio')
 plt.ylim(0, 100)
 
@@ -276,8 +267,50 @@ plt.show()
 
 
 
+## Plotting code from lpdaac
+in_out_plot = out_plume.hvplot(x='wavelengths',y='band_ratio', by=['ID'], color=hv.Cycle('Dark2'), frame_height=400, frame_width=400, xlim=(2150,2450), ylim=(0.85,1.05), ylabel='In Plume/Out of Plume Ratio', xlabel='Wavelength (nm)', title='In Plume/Out of Plume Ratio')
+
+ac = pd.DataFrame(wavelength_range, interpolated_coef)
+ac.columns = ['wavelengths','band_ratio']
 
 
+ac_plot = ac.hvplot(x='wavelengths',y='band_ratio', frame_height=400, frame_width=400, line_color='black', line_width=2, xlim=(2150,2450), ylim=(-1.5,0), xlabel='Wavelength (nm)', title='Ammonia Absorption Coefficient', ylabel='')
+
+from bokeh.models import GlyphRenderer, LinearAxis, LinearScale, Range1d
+
+def overlay_hook(plot, element):
+    # Adds right y-axis
+    p = plot.handles["plot"]
+    p.extra_y_scales = {"right": LinearScale()}
+    p.extra_y_ranges = {"right": Range1d(-1.5,0)}
+    p.add_layout(LinearAxis(y_range_name="right"), "right")
+
+   # find the last line and set it to right
+    lines = [p for p in p.renderers if isinstance(p, GlyphRenderer)]
+    lines[-1].y_range_name = "right"
+
+
+(in_out_plot.opts(ylim=(0.85,0.95)) * ac_plot.opts(color="k")).opts(hooks=[overlay_hook]).opts(title='In Plume/Out of Plume and Absorption Coefficient') 
+
+out_plume['out-out'] = (out_plume['radiance'] / out_plume.loc[2,'radiance'])
+
+out_out_plot = out_plume.hvplot(x='wavelengths',y='out-out', by=['ID'], color=hv.Cycle('Dark2'), frame_height=400, frame_width=400, xlim=(2150,2450), ylim=(0.85,1.05), ylabel='Out/Out 2 Ratio', xlabel='Wavelength (nm)', title='Out of Plume/Out of Plume 2 Ratio')
+
+from bokeh.models import GlyphRenderer, LinearAxis, LinearScale, Range1d
+
+def overlay_hook(plot, element):
+    # Adds right y-axis
+    p = plot.handles["plot"]
+    p.extra_y_scales = {"right": LinearScale()}
+    p.extra_y_ranges = {"right": Range1d(-1.5,0)}
+    p.add_layout(LinearAxis(y_range_name="right"), "right")
+
+   # find the last line and set it to right
+    lines = [p for p in p.renderers if isinstance(p, GlyphRenderer)]
+    lines[-1].y_range_name = "right"
+
+# Create Figure
+(out_out_plot * ac_plot.opts(color="k")).opts(hooks=[overlay_hook]).opts(title='Out of Plume/Out of Plume and Absorption Coefficient') 
 
 
 
