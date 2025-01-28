@@ -212,27 +212,9 @@ interp_func = interp1d(wavelength_nm, coef, kind='linear', fill_value=0, bounds_
 interpolated_coef = interp_func(wavelength_range)
 
 
-
-### Alternate approach
-dwa_coef = []
-
-for new_w in wavelength_range:
-    # Calculate the distances between the new wavelength and all original wavelengths
-    distances = np.abs(wavelength_nm - new_w)
-    
-    # Compute the weights as the inverse of the distance (to give closer points more weight)
-    # We add a small value to avoid division by zero (e.g., 1e-10)
-    weights = 1 / ((distances + 1e-10)**2)
-    
-    # Compute the weighted average of absorption coefficients
-    weighted_average = np.sum(weights * coef) / np.sum(weights)
-    dwa_coef.append(weighted_average)
-
-
-
 # Visualize the result
 plt.figure()
-plt.plot(wavelength_range, dwa_coef)
+plt.plot(wavelength_range, interpolated_coef)
 plt.xlabel('Wavelength (nm)')
 plt.ylabel('Absorption Coefficient')
 plt.title('Interpolated Absorption Coefficients (285 values between 380nm and 2500nm)')
