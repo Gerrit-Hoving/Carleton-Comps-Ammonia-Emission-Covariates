@@ -49,9 +49,6 @@ emit_bands = df[df['ID'] == 0].copy()
 #emit_bands['wavenumber'] = 1e7 / emit_bands[1]
 emit_bands['wavenumber'] = (1 / (emit_bands['wavelengths'] * 1e-7)).astype('float64')
 
-
-
-
 ### Calculate coefficents from EMIT band positions
 
 db_begin('../data/HITRAN')
@@ -245,6 +242,31 @@ raster_data, transform, crs, meta = load_raster(raster_file)
 # Apply the matched filter to get the concentration map
 concentration_map = np.zeros((raster_data.shape[1], raster_data.shape[2]))
     
+
+#### Matched filter implementation from isofit tutorials
+rows, cols, bands = 2018,2239,285
+
+#mm = np.memmap(raster_file, dtype=np.float32, mode='r', shape=(rows, cols, bands))
+mm = raster_data
+X = np.asarray(mm).copy()
+
+X = X.reshape(rows*cols, bands)
+
+# A subset of pixels is sufficient, say one out of every 100
+subset = np.arange(0,X.shape[0],100)
+Xsub = X[subset,:]
+Xsub = Xsub[~np.isnan(Xsub).any(axis=1)]
+mu = Xsub.mean(axis=0)
+
+# Calculate the covariance
+Cov = np.cov(Xsub, rowvar=False);
+
+Cinv = inv(Cov + np.eye(len(nu_nm))*1e-8)
+
+
+
+
+
 # Loop through each pixel 
 for row in range(raster_data.shape[1]):
     for col in range(raster_data.shape[2]):
@@ -498,4 +520,23 @@ def overlay_hook(plot, element):
 
 
 
+
+# Create an RGB from Radiance
+rgb = rad.sel(wavelengths=[650,560,470], method='nearest')
+
+rgb.radiance.data[rgb.radiance.data == -9999] = 0
+
+vmin, vmax = np.percentile(rgb.radiance.data, (2, 98))
+rgb.radiance.data = exposure.rescale_intensity(rgb.radiance.data, in_range=(vmin, vmax), out_range=(0,1))
+
+rgb_image = rgb.radiance.data
+
+# Plot the RGB image using matplotlib
+plt.figure(figsize=(10, 8))
+plt.imshow(rgb_image)
+plt.title('RGB Radiance')
+
+sns.scatterplot(x=df['longitude'], y=df['latitude'], s=100, edgecolor='w', legend=None)
+
+plt.show()
 
