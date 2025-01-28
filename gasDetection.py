@@ -24,13 +24,166 @@ import pandas as pd
 import holoviews as hv
 
 
+
+### Load EMIT raster
+raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
+
+rad = emit_xarray(raster_path, ortho=True)
+
+#old model
+#points = pd.DataFrame([{"ID": 0, "latitude": 36.2286746, "longitude": -119.1756712}, {"ID": 1, "latitude": 36.2279773, "longitude": -119.1756845}])
+#new model
+#points = pd.DataFrame([{"ID": 0, "latitude": 36.224390, "longitude": -119.175144}, {"ID": 1, "latitude": 36.223793, "longitude": -119.176743}])
+#new model max concentration difference
+points = pd.DataFrame([{"ID": 0, "latitude": 36.229778, "longitude": -119.161069}, {"ID": 1, "latitude": 36.234525, "longitude": -119.166433}])
+
+
+points = points.set_index(['ID'])
+
+point_ds = rad.sel(latitude=points.to_xarray().latitude, longitude=points.to_xarray().longitude, method='nearest')
+
+df = point_ds.to_dataframe().reset_index()
+
+emit_bands = df[df['ID'] == 0].copy()
+
+#emit_bands['wavenumber'] = 1e7 / emit_bands[1]
+emit_bands['wavenumber'] = (1 / (emit_bands['wavelengths'] * 1e-7)).astype('float64')
+
+
+
+
+### Calculate coefficents from EMIT band positions
+
 db_begin('../data/HITRAN')
 
-fetch('CH4',6,1,4000,27000)
+#fetch('NH3',6,1,4000,27000)
 
-nu,coef = hapi.absorptionCoefficient_Lorentz(SourceTables='CH4', Diluent={'air':1.0}, Environment = {'p':0.98,'T':305},)
+nu,coef = hapi.absorptionCoefficient_Lorentz(SourceTables='NH3', WavenumberGrid=np.array(emit_bands['wavenumber']), Diluent={'air':1.0}, Environment = {'p':0.98,'T':305})
 
 plt.plot(nu,coef)
+plt.show()
+
+nu_nm = 1e7 / nu
+
+plt.plot(nu_nm,coef)
+plt.show()
+
+
+
+### Join coefficents and radiance dfs
+ac = {'wavelengths':nu_nm, 'coefficients':coef}
+ac_df = pd.DataFrame(ac)
+
+# Round both wavelength columns to the nearest ten
+df['wavelength'] = df['wavelengths'].astype('float64').round(1)
+ac_df['wavelength'] = ac_df['wavelengths'].astype('float64').round(1)
+
+# Merge the DataFrames on the rounded columns
+full_df = pd.merge(df, ac_df, left_on='wavelength', right_on='wavelength', how='left')
+
+# Drop the temporary rounded columns if not needed
+full_df.drop(['wavelengths_x', 'wavelengths_y'], axis=1, inplace=True)
+
+
+
+
+### Plot in/out of plume spectra
+
+# Plot using seaborn
+plt.figure(figsize=(8, 6))  # Equivalent to frame_height=400, frame_width=600
+
+# Create the line plot with seaborn
+sns.lineplot(
+    data=full_df,
+    x='wavelength',
+    y='radiance',
+    hue='ID',  # Group data by 'ID'
+    palette='Dark2',  # Use Dark2 color palette
+    marker='o'  # Optional: add markers to lines
+)
+
+
+# Add titles and labels
+plt.title('Radiance Spectra, ID 0 is in-plume')
+plt.xlabel('Wavelength (nm)')
+plt.ylabel('Radiance (W/m^2/sr/nm)')
+
+# Show the plot
+plt.show()
+
+
+in_plume = df.loc[df['ID'] == 0].copy()
+out_plume = df.loc[df['ID'] == 1].copy()
+out_plume = out_plume.drop(out_plume[out_plume.radiance < 0.1].index)
+
+out_plume['band_ratio'] = (in_plume.loc[0, 'radiance']/out_plume['radiance'])
+
+#out_plume = out_plume.drop(out_plume[out_plume.band_ratio > 10].index)
+
+
+
+
+# Plot using seaborn
+plt.figure(figsize=(8, 6))  # Equivalent to frame_height=400, frame_width=600
+
+# Create the line plot with seaborn
+sns.lineplot(
+    data=out_plume,
+    x='wavelengths',
+    y='band_ratio',
+    hue='ID',  # Group data by 'ID'
+    palette='Dark2',  # Use Dark2 color palette
+    marker='o'  # Optional: add markers to lines
+)
+
+full_df['scaled_coef'] = full_df['coefficients']*1e21
+
+sns.lineplot(
+    data=full_df,
+    x='wavelength',
+    y='scaled_coef',
+    marker='o'
+)
+
+
+# Add titles and labels
+plt.title('In Plume/Out of Plume Ratio')
+plt.xlabel('Wavelength (nm)')
+plt.xlim(2000, 2500)
+plt.ylabel('In Plume/Out of Plume Ratio')
+#plt.ylim(0, 20)
+
+plt.show()
+
+sns.lineplot(
+    data=full_df,
+    x='wavelength',
+    y='coefficients',
+    marker='o'
+)
+
+
+# Add titles and labels
+plt.title('NH3 Spectrum')
+plt.xlabel('Wavelength (nm)')
+plt.xlim(1400, 2500)
+plt.ylabel('Absorbtion Coefficent')
+#plt.ylim(0, 100)
+
+# Show the plot
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -53,14 +206,33 @@ wavelength_range = np.linspace(wavelength_min, wavelength_max, 285)
 from scipy.interpolate import interp1d
 
 # Interpolate coef as a function of wavelength
-interp_func = interp1d(wavelength_nm, coef, kind='linear', bounds_error=False, fill_value=0)
+interp_func = interp1d(wavelength_nm, coef, kind='linear', fill_value=0, bounds_error=False)
 
 # Get the interpolated absorption coefficients for the new wavelength range
 interpolated_coef = interp_func(wavelength_range)
 
+
+
+### Alternate approach
+dwa_coef = []
+
+for new_w in wavelength_range:
+    # Calculate the distances between the new wavelength and all original wavelengths
+    distances = np.abs(wavelength_nm - new_w)
+    
+    # Compute the weights as the inverse of the distance (to give closer points more weight)
+    # We add a small value to avoid division by zero (e.g., 1e-10)
+    weights = 1 / ((distances + 1e-10)**2)
+    
+    # Compute the weighted average of absorption coefficients
+    weighted_average = np.sum(weights * coef) / np.sum(weights)
+    dwa_coef.append(weighted_average)
+
+
+
 # Visualize the result
 plt.figure()
-plt.plot(wavelength_range, interpolated_coef)
+plt.plot(wavelength_range, dwa_coef)
 plt.xlabel('Wavelength (nm)')
 plt.ylabel('Absorption Coefficient')
 plt.title('Interpolated Absorption Coefficients (285 values between 380nm and 2500nm)')
@@ -132,7 +304,7 @@ mu = Xsub.mean(axis=0)
 # Calculate the covariance
 Cov = np.cov(Xsub, rowvar=False);
 
-Cinv = inv(Cov + np.eye(len(nu))*1e-8)
+Cinv = inv(Cov + np.eye(len(nu_nm))*1e-8)
 mf = ((X-mu).dot(Cinv.dot(coef)))/(coef.dot(Cinv.dot(coef)))
 
 ## TODO: Fix reshape to get comprehensible output
@@ -175,7 +347,7 @@ meta.update({
     'count': 1,  # Single band (grayscale image)
     'dtype': 'float32',  # Data type for concentration map
 })
-with rasterio.open('concentration_map_ch4.tif', 'w', **meta) as dst:
+with rasterio.open('concentration_map_nh3_2.tif', 'w', **meta) as dst:
     dst.write(concentration_map.astype('float32'), 1)  # Write the data to the first band
 
 
@@ -185,7 +357,10 @@ raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_
 
 rad = emit_xarray(raster_path, ortho=True)
 
-points = pd.DataFrame([{"ID": 0, "latitude": 36.2286746, "longitude": -119.1756712}, {"ID": 1, "latitude": 36.2279773, "longitude": -119.1756845}])
+#old model
+#points = pd.DataFrame([{"ID": 0, "latitude": 36.2286746, "longitude": -119.1756712}, {"ID": 1, "latitude": 36.2279773, "longitude": -119.1756845}])
+#new model
+points = pd.DataFrame([{"ID": 0, "latitude": 36.224390, "longitude": -119.175144}, {"ID": 1, "latitude": 36.223793, "longitude": -119.176743}])
 
 
 points = points.set_index(['ID'])
@@ -230,6 +405,13 @@ in_plume = df.loc[df['ID'] == 0].copy()
 out_plume = df.loc[df['ID'] == 1].copy()
 out_plume['band_ratio'] = (in_plume.loc[0, 'radiance']/out_plume['radiance'])
 
+out_plume = out_plume.drop(out_plume[out_plume.band_ratio > 10].index)
+
+
+ac = {'wavelengths':nu, 'coefficients':coef}
+
+ac_df = pd.DataFrame(ac)
+
 
 # Plot using seaborn
 plt.figure(figsize=(8, 6))  # Equivalent to frame_height=400, frame_width=600
@@ -244,12 +426,31 @@ sns.lineplot(
     marker='o'  # Optional: add markers to lines
 )
 
-
 # Add titles and labels
 plt.title('In Plume/Out of Plume Ratio')
 plt.xlabel('Wavelength (nm)')
 plt.xlim(1400, 2500)
 plt.ylabel('In Plume/Out of Plume Ratio')
+plt.ylim(0, 100)
+
+
+plt.show()
+
+sns.lineplot(
+    data=ac_df,
+    x='wavelengths',
+    y='coefficients',
+    hue='ID',  # Group data by 'ID'
+    palette='Dark2',  # Use Dark2 color palette
+    marker='o'  # Optional: add markers to lines
+)
+
+
+# Add titles and labels
+plt.title('NH3 Spectrum')
+plt.xlabel('Wavelength (nm)')
+plt.xlim(1400, 2500)
+plt.ylabel('Absorbtion Coefficent')
 plt.ylim(0, 100)
 
 """
@@ -267,14 +468,11 @@ plt.show()
 
 
 
+
+
+
 ## Plotting code from lpdaac
-in_out_plot = out_plume.hvplot(x='wavelengths',y='band_ratio', by=['ID'], color=hv.Cycle('Dark2'), frame_height=400, frame_width=400, xlim=(2150,2450), ylim=(0.85,1.05), ylabel='In Plume/Out of Plume Ratio', xlabel='Wavelength (nm)', title='In Plume/Out of Plume Ratio')
-
-ac = pd.DataFrame(wavelength_range, interpolated_coef)
-ac.columns = ['wavelengths','band_ratio']
-
-
-ac_plot = ac.hvplot(x='wavelengths',y='band_ratio', frame_height=400, frame_width=400, line_color='black', line_width=2, xlim=(2150,2450), ylim=(-1.5,0), xlabel='Wavelength (nm)', title='Ammonia Absorption Coefficient', ylabel='')
+ac_plot = ac_df.hvplot(x='wavelengths',y='coefficients', frame_height=400, frame_width=400, line_color='black', line_width=2, xlim=(2150,2450), ylim=(-1.5,0), xlabel='Wavelength (nm)', title='Ammonia Absorption Coefficient', ylabel='')
 
 from bokeh.models import GlyphRenderer, LinearAxis, LinearScale, Range1d
 
@@ -290,9 +488,13 @@ def overlay_hook(plot, element):
     lines[-1].y_range_name = "right"
 
 
-(in_out_plot.opts(ylim=(0.85,0.95)) * ac_plot.opts(color="k")).opts(hooks=[overlay_hook]).opts(title='In Plume/Out of Plume and Absorption Coefficient') 
 
 out_plume['out-out'] = (out_plume['radiance'] / out_plume.loc[2,'radiance'])
+
+in_out_plot = out_plume.hvplot(x='wavelengths',y='band_ratio', by=['ID'], color=hv.Cycle('Dark2'), frame_height=400, frame_width=400, xlim=(2150,2450), ylim=(0.85,1.05), ylabel='In Plume/Out of Plume Ratio', xlabel='Wavelength (nm)', title='In Plume/Out of Plume Ratio')
+
+(in_out_plot.opts(ylim=(0.85,0.95)) * ac_plot.opts(color="k")).opts(hooks=[overlay_hook]).opts(title='In Plume/Out of Plume and Absorption Coefficient') 
+
 
 out_out_plot = out_plume.hvplot(x='wavelengths',y='out-out', by=['ID'], color=hv.Cycle('Dark2'), frame_height=400, frame_width=400, xlim=(2150,2450), ylim=(0.85,1.05), ylabel='Out/Out 2 Ratio', xlabel='Wavelength (nm)', title='Out of Plume/Out of Plume 2 Ratio')
 
