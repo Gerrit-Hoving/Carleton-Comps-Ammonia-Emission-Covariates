@@ -263,10 +263,6 @@ Cov = np.cov(Xsub, rowvar=False);
 
 Cinv = inv(Cov + np.eye(len(nu_nm))*1e-8)
 
-
-
-
-
 # Loop through each pixel 
 for row in range(raster_data.shape[1]):
     for col in range(raster_data.shape[2]):
@@ -277,8 +273,8 @@ for row in range(raster_data.shape[1]):
         spectrum /= np.max(spectrum)
         
         # Perform the matched filter - dot product between the spectrum and the absorption coefficients
-        #matched_filter = np.dot(spectrum, coef)  # We assume both spectrum and coef have the same shape
-        matched_filter = ((spectrum-mu).dot(Cinv.dot(coef)))/(coef.dot(Cinv.dot(coef)))
+        matched_filter = np.dot(spectrum, coef)  # We assume both spectrum and coef have the same shape
+        #matched_filter = ((spectrum-mu).dot(Cinv.dot(coef)))/(coef.dot(Cinv.dot(coef)))
         
         
         #matched_filter = matched_filter if matched_filter > (10^(-20)) else 0
@@ -327,7 +323,7 @@ plt.imshow(concentration_map, cmap='viridis')
 plt.colorbar(label='Concentration')
 plt.title('Concentration Map')
 
-plt.savefig('interpolated_absorption_coefficients.tif', format='tiff', dpi=800)
+#plt.savefig('interpolated_absorption_coefficients.tif', format='tiff', dpi=800)
 plt.show()
 
 #concentration_map = abs(concentration_map) / 1e17
@@ -340,7 +336,8 @@ plt.imshow(new_array, cmap='viridis')
 plt.colorbar(label='Concentration')
 plt.title('Concentration Map')
 
-plt.savefig('interpolated_absorption_coefficients_threshold.tif', format='tiff', dpi=800)
+
+#plt.savefig('interpolated_absorption_coefficients_threshold.tif', format='tiff', dpi=800)
 plt.show()
 
 
