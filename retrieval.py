@@ -9,10 +9,12 @@ import hapi
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from scipy.interpolate import interp1d
 from emit_tools import emit_xarray
 import rasterio
 from scipy.linalg import inv
+
 
 
 
@@ -149,7 +151,83 @@ def matchedFilter(rasterFile, nu, coef, save=False):
         
     return concentration_map
 
+def inOutPlumeGraph(point_df, raster_path):
+    # Plot using seaborn
+    plt.figure(figsize=(8, 6))  # Equivalent to frame_height=400, frame_width=600
 
+    # Create the line plot with seaborn
+    sns.lineplot(
+        data=df,
+        x='wavelengths',
+        y='radiance',
+        hue='ID',  # Group data by 'ID'
+        palette='Dark2',  # Use Dark2 color palette
+        marker='o'  # Optional: add markers to lines
+    )
+
+
+    # Add titles and labels
+    plt.title('Radiance Spectra, ID 0 is in-plume')
+    plt.xlabel('Wavelength (nm)')
+    plt.ylabel('Radiance (W/m^2/sr/nm)')
+
+    # Show the plot
+    plt.show()
+
+
+    in_plume = df.loc[df['ID'] == 0].copy()
+    out_plume = df.loc[df['ID'] == 1].copy()
+    out_plume['band_ratio'] = (in_plume.loc[0, 'radiance']/out_plume['radiance'])
+
+    out_plume = out_plume.drop(out_plume[out_plume.band_ratio > 10].index)
+
+    ac = {'wavelengths':nu, 'coefficients':coef}
+
+    ac_df = pd.DataFrame(ac)
+
+
+    # Plot using seaborn
+    plt.figure(figsize=(8, 6))  # Equivalent to frame_height=400, frame_width=600
+
+    # Create the line plot with seaborn
+    sns.lineplot(
+        data=out_plume,
+        x='wavelengths',
+        y='band_ratio',
+        hue='ID',  # Group data by 'ID'
+        palette='Dark2',  # Use Dark2 color palette
+        marker='o'  # Optional: add markers to lines
+    )
+
+    # Add titles and labels
+    plt.title('In Plume/Out of Plume Ratio')
+    plt.xlabel('Wavelength (nm)')
+    plt.xlim(1400, 2500)
+    plt.ylabel('In Plume/Out of Plume Ratio')
+    plt.ylim(0, 100)
+
+
+    plt.show()
+
+    sns.lineplot(
+        data=ac_df,
+        x='wavelengths',
+        y='coefficients',
+        hue='ID',  # Group data by 'ID'
+        palette='Dark2',  # Use Dark2 color palette
+        marker='o'  # Optional: add markers to lines
+    )
+
+
+    # Add titles and labels
+    plt.title('NH3 Spectrum')
+    plt.xlabel('Wavelength (nm)')
+    plt.xlim(1400, 2500)
+    plt.ylabel('Absorbtion Coefficent')
+    plt.ylim(0, 100)
+
+    # Show the plot
+    plt.show()
 
 
 
@@ -159,12 +237,20 @@ raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_
 
 rad = emit_xarray(raster_path, ortho=True)
 
+
+# 0 is in plume
 #old model
 #points = pd.DataFrame([{"ID": 0, "latitude": 36.2286746, "longitude": -119.1756712}, {"ID": 1, "latitude": 36.2279773, "longitude": -119.1756845}])
 #new model
 #points = pd.DataFrame([{"ID": 0, "latitude": 36.224390, "longitude": -119.175144}, {"ID": 1, "latitude": 36.223793, "longitude": -119.176743}])
 #new model max concentration difference
-points = pd.DataFrame([{"ID": 0, "latitude": 36.229778, "longitude": -119.161069}, {"ID": 1, "latitude": 36.234525, "longitude": -119.166433}])
+#points = pd.DataFrame([{"ID": 0, "latitude": 36.229778, "longitude": -119.161069}, {"ID": 1, "latitude": 36.234525, "longitude": -119.166433}])
+#pond-feedlot diff
+points = pd.DataFrame([{"ID": 0, "latitude": 36.062170, "longitude": -119.378442}, {"ID": 1, "latitude": 36.061509, "longitude": -119.378456}])
+#feedlot-off feedlot edge
+#points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}])
+
+
 
 points = points.set_index(['ID'])
 
@@ -174,12 +260,11 @@ df = point_ds.to_dataframe().reset_index()
 
 emit_bands = df[df['ID'] == 0].copy()
 
-
 nu, nu_nm, coef = calcSpectrum(emit_bands)
 
 
 raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
 matchedFilter(raster_file, nu, coef, save = True)
 
-
-
+nc = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
+inOutPlumeGraph(df, nc)
