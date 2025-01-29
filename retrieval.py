@@ -27,10 +27,10 @@ def calcSpectrum(bands, do_fetch=False, use_bands=True):
         hapi.fetch('NH3',6,1,4000,27000)
 
     if(use_bands):
-        #nu,coef = hapi.absorptionCoefficient_Lorentz(SourceTables='NH3', WavenumberGrid=np.array(bands['wavenumber']), Diluent={'air':1.0}, Environment = {'p':0.98,'T':305})
+        nu,coef = hapi.absorptionCoefficient_Lorentz(SourceTables='NH3', WavenumberGrid=np.array(bands['wavenumber']), Diluent={'air':1.0}, Environment = {'p':0.98,'T':305})
         #nu,coef = hapi.absorptionCoefficient_HT(SourceTables='NH3', WavenumberGrid=np.array(bands['wavenumber']), Diluent={'air':1.0}, Environment = {'p':0.98,'T':305})
         #nu,coef = hapi.absorptionCoefficient_Voigt(SourceTables='NH3', WavenumberGrid=np.array(bands['wavenumber']), Diluent={'air':1.0}, Environment = {'p':0.98,'T':305})
-        nu,coef = hapi.absorptionCoefficient_Doppler(SourceTables='NH3', WavenumberGrid=np.array(bands['wavenumber']), Diluent={'air':1.0}, Environment = {'p':0.98,'T':305})
+        #nu,coef = hapi.absorptionCoefficient_Doppler(SourceTables='NH3', WavenumberGrid=np.array(bands['wavenumber']), Diluent={'air':1.0}, Environment = {'p':0.98,'T':305})
         #nu,coef = hapi.absorptionCoefficient_SDVoigt(SourceTables='NH3', WavenumberGrid=np.array(bands['wavenumber']), Diluent={'air':1.0}, Environment = {'p':0.98,'T':305})
 
     else:
@@ -65,7 +65,7 @@ def calcSpectrum(bands, do_fetch=False, use_bands=True):
     # Return wavenumber, wavelength, coefficents
     return nu, nu_nm, coef
 
-def matchedFilter(rasterFile, absorbtions):
+def matchedFilter(rasterFile, nu, coef, save=False):
     with rasterio.open(rasterFile) as src:
         raster_data = src.read()  # Returns an array (bands, rows, cols)
         transform = src.transform
@@ -75,7 +75,6 @@ def matchedFilter(rasterFile, absorbtions):
     # Apply the matched filter to get the concentration map
     concentration_map = np.zeros((raster_data.shape[1], raster_data.shape[2]))
         
-
     #### Matched filter implementation from isofit tutorials
     rows, cols, bands = 2018,2239,285
 
@@ -116,42 +115,39 @@ def matchedFilter(rasterFile, absorbtions):
             # Simplified: assuming direct proportionality between matched filter and concentration
             concentration_map[row, col] = matched_filter
 
+    plt.figure()
+    plt.imshow(concentration_map, cmap='viridis')
+    plt.colorbar(label='Concentration')
+    plt.title('Concentration Map')
+    
+    #plt.savefig('interpolated_absorption_coefficients.tif', format='tiff', dpi=800)
+    plt.show()
+    
+    concentration_map = abs(concentration_map) / 1e18
+    low = 0
+    high = 3
+    new_array = np.where(concentration_map < low, low, concentration_map)
+    new_array = np.where(new_array > high, low, new_array)
+    plt.figure()
+    plt.imshow(new_array, cmap='viridis')
+    plt.colorbar(label='Concentration')
+    plt.title('Concentration Map')
+    
+    #plt.savefig('interpolated_absorption_coefficients_threshold.tif', format='tiff', dpi=800)
+    plt.show()
 
-
-
-    #### Matched filter implementation from isofit tutorials
-    rows, cols, bands = 2018,2239,285
-
-    #mm = np.memmap(raster_file, dtype=np.float32, mode='r', shape=(rows, cols, bands))
-    mm = raster_data
-    X = np.asarray(mm).copy()
-
-    X = X.reshape(rows*cols, bands)
-
-    # A subset of pixels is sufficient, say one out of every 100
-    subset = np.arange(0,X.shape[0],100)
-    Xsub = X[subset,:]
-    Xsub = Xsub[~np.isnan(Xsub).any(axis=1)]
-    mu = Xsub.mean(axis=0)
-
-    # Calculate the covariance
-    Cov = np.cov(Xsub, rowvar=False);
-
-    Cinv = inv(Cov + np.eye(len(nu_nm))*1e-8)
-    mf = ((X-mu).dot(Cinv.dot(coef)))/(coef.dot(Cinv.dot(coef)))
-
-    ## TODO: Fix reshape to get comprehensible output
-    out = mf.reshape(cols, rows, 1)
-    plt.imshow(out * 10000.0)
-    plt.colorbar()
-    plt.clim([0,200])
-    plt.title('NH3 plume (ppm m)')
-    plt.imsave('MF2.png',mf*10000.0)
-
-
-
-
-
+    if(save):
+        ### Save to geotiff
+        
+        # Update the metadata for the output file
+        meta.update({
+            'count': 1,  # Single band (grayscale image)
+            'dtype': 'float32',  # Data type for concentration map
+        })
+        with rasterio.open('concentration_map_nh3_3.tif', 'w', **meta) as dst:
+            dst.write(concentration_map.astype('float32'), 1)  # Write the data to the first band  
+        
+    return concentration_map
 
 
 
@@ -182,9 +178,8 @@ emit_bands = df[df['ID'] == 0].copy()
 nu, nu_nm, coef = calcSpectrum(emit_bands)
 
 
-
 raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
-matchedFilter()
+matchedFilter(raster_file, nu, coef, save = True)
 
 
 
