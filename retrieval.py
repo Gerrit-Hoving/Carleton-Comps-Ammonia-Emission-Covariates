@@ -78,7 +78,7 @@ def matchedFilter(rasterFile, nu, coef, save=False):
     concentration_map = np.zeros((raster_data.shape[1], raster_data.shape[2]))
         
     #### Matched filter implementation from isofit tutorials
-    rows, cols, bands = 2018,2239,285
+    rows, cols, bands = raster_data.shape[1],raster_data.shape[2],285
 
     #mm = np.memmap(raster_file, dtype=np.float32, mode='r', shape=(rows, cols, bands))
     mm = raster_data
@@ -86,7 +86,7 @@ def matchedFilter(rasterFile, nu, coef, save=False):
 
     X = X.reshape(rows*cols, bands)
 
-    # A subset of pixels is sufficient, say one out of every 100
+    # A subset of pixels for calculating Cov and mu
     subset = np.arange(0,X.shape[0],100)
     Xsub = X[subset,:]
     Xsub = Xsub[~np.isnan(Xsub).any(axis=1)]
@@ -146,7 +146,7 @@ def matchedFilter(rasterFile, nu, coef, save=False):
             'count': 1,  # Single band (grayscale image)
             'dtype': 'float32',  # Data type for concentration map
         })
-        with rasterio.open('concentration_map_nh3_3.tif', 'w', **meta) as dst:
+        with rasterio.open('concentration_map_nh3_003_01.tif', 'w', **meta) as dst:
             dst.write(concentration_map.astype('float32'), 1)  # Write the data to the first band  
         
     return concentration_map
@@ -222,7 +222,10 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
 
 
 ### Load EMIT raster
-raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
+#raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
+#raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004.nc'
+raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003.nc'
+
 
 rad = emit_xarray(raster_path, ortho=True)
 
@@ -255,8 +258,11 @@ ac = {'wavelengths':nu_nm, 'coefficients':coef}
 
 ac_df = pd.DataFrame(ac)
 
-raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
-#matchedFilter(raster_file, nu, coef, save = True)
+#raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
+#raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004_radiance'  
+raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003_radiance'  
 
-nc = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
-inOutPlumeGraph(df, ac_df, nc)
+matchedFilter(raster_file, nu, coef, save = True)
+
+#nc = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
+#inOutPlumeGraph(df, ac_df, nc)

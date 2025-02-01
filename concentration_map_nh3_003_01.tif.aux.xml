@@ -1,0 +1,33 @@
+<PAMDataset>
+  <Metadata>
+    <MDI key="Band_1">Band 1</MDI>
+  </Metadata>
+  <Metadata domain="ENVI">
+    <MDI key="description">{concentration_map_nh3_003_01.tif}</MDI>
+    <MDI key="samples">2374</MDI>
+    <MDI key="lines">1882</MDI>
+    <MDI key="bands">1</MDI>
+    <MDI key="header_offset">0</MDI>
+    <MDI key="file_type">ENVI Standard</MDI>
+    <MDI key="data_type">4</MDI>
+    <MDI key="interleave">bsq</MDI>
+    <MDI key="byte_order">0</MDI>
+    <MDI key="map_info">{Geographic Lat/Lon, 1, 1, -119.888970896244, 35.8900467616513, 0.000542232520256367, 0.000542232520256367,WGS-84}</MDI>
+    <MDI key="coordinate_system_string">{GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]}</MDI>
+    <MDI key="band_names">{Band 1}</MDI>
+  </Metadata>
+  <Metadata domain="IMAGE_STRUCTURE">
+    <MDI key="INTERLEAVE">BAND</MDI>
+  </Metadata>
+  <PAMRasterBand band="1">
+    <Description>Band 1</Description>
+    <Metadata>
+      <MDI key="STATISTICS_APPROXIMATE">YES</MDI>
+      <MDI key="STATISTICS_MINIMUM">1.5030404028948e-05</MDI>
+      <MDI key="STATISTICS_MAXIMUM">1.7360813617706</MDI>
+      <MDI key="STATISTICS_MEAN">0.24160031681522</MDI>
+      <MDI key="STATISTICS_STDDEV">0.16421038196963</MDI>
+      <MDI key="STATISTICS_VALID_PERCENT">49.87</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>
