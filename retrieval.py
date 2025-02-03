@@ -84,22 +84,34 @@ def matchedFilter(rasterFile, nu, coef, save=False):
     mm = raster_data
     X = np.asarray(mm).copy()
 
-    X = X.reshape(rows*cols, bands)
+    #X = X.reshape(rows*cols, bands)
 
     # A subset of pixels for calculating Cov and mu
-    subset = np.arange(0,X.shape[0],100)
-    Xsub = X[subset,:]
-    Xsub = Xsub[~np.isnan(Xsub).any(axis=1)]
-    mu = Xsub.mean(axis=0)
+    #subset = np.arange(0,X.shape[0],100)
+    #Xsub = X[subset,:]
+    #Xsub = Xsub[~np.isnan(Xsub).any(axis=1)]
+    #mu = Xsub.mean(axis=0)
 
     # Calculate the covariance
-    Cov = np.cov(Xsub, rowvar=False);
-
-    Cinv = inv(Cov + np.eye(len(nu_nm))*1e-8)
+    #Cov = np.cov(Xsub, rowvar=False);
+    #Cinv = inv(Cov + np.eye(len(nu_nm))*1e-8)
 
     # Loop through each pixel 
-    for row in range(raster_data.shape[1]):
-        for col in range(raster_data.shape[2]):
+    for col in range(raster_data.shape[2]):
+        # Extract all data for the current column (over all rows, for all bands)
+        Xsub = X[:, :, col]  # Shape will be (bands, rows)
+    
+        # Remove rows that have NaN values
+        Xsub = Xsub[~np.isnan(Xsub).any(axis=1)]
+    
+        # Calculate the mean (mu) of the subset (over rows)
+        mu = Xsub.mean(axis=0)
+    
+        # Calculate the covariance matrix and invrse for the column
+        Cov = np.cov(Xsub, rowvar=False)  # Covariance over rows, so it's (bands, bands)
+        Cinv = inv(Cov + np.eye(len(mu)) * 1e-8)  # Adding a small regularization term to avoid singularity
+ 
+        for row in range(raster_data.shape[1]):
             # Extract the spectrum for this pixel
             spectrum = raster_data[:, row, col]
             
@@ -146,7 +158,7 @@ def matchedFilter(rasterFile, nu, coef, save=False):
             'count': 1,  # Single band (grayscale image)
             'dtype': 'float32',  # Data type for concentration map
         })
-        with rasterio.open('concentration_map_nh3_003_01.tif', 'w', **meta) as dst:
+        with rasterio.open('concentration_map_nh3_006_01.tif', 'w', **meta) as dst:
             dst.write(concentration_map.astype('float32'), 1)  # Write the data to the first band  
         
     return concentration_map
@@ -222,9 +234,9 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
 
 
 ### Load EMIT raster
-#raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
+raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
 #raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004.nc'
-raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003.nc'
+#raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003.nc'
 
 
 rad = emit_xarray(raster_path, ortho=True)
@@ -258,11 +270,10 @@ ac = {'wavelengths':nu_nm, 'coefficients':coef}
 
 ac_df = pd.DataFrame(ac)
 
-#raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
+raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
 #raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004_radiance'  
-raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003_radiance'  
+#raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003_radiance'  
 
 matchedFilter(raster_file, nu, coef, save = True)
 
-#nc = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
-#inOutPlumeGraph(df, ac_df, nc)
+#inOutPlumeGraph(df, ac_df, raster_path)
