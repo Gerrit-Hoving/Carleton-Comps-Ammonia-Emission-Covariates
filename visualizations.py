@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 from analysis import randomForestReg, partialLeastSquaresReg
-from analysis import graphRFRegStability
+from analysis import graphRFRegStability, graphCompareModels
 from analysis import graphRFEst
 from analysis import graphPLSRComp
 
@@ -46,7 +46,7 @@ print(pca.singular_values_)
 
 reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 
-#input_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
+#reduced_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
 
 input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 
@@ -56,11 +56,15 @@ input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 #partialLeastSquaresReg('NH3 (kg/h)', 8, df=input_df, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
-#graphPLSRComp('NH3 (kg/h)', 5, 10, 1)
+#graphPLSRComp(input_df, 'NH3 (kg/h)', 2, 10, 1)
 #graphRFEst('NH3 (kg/h)', 5, 500, 5, input_df)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
-graphRFRegStability('NH3 (kg/h)', 200, df=input_df, iterations = 100, dimensionality='reduced')
+#graphRFRegStability('NH3 (kg/h)', 200, df=input_df, iterations = 1000, dimensionality='reduced')
+
+
+comparison_dfs = {'base':input_df}
+graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs)
 
 ### Decent figures
 

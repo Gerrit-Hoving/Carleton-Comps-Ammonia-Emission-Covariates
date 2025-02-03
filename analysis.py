@@ -29,7 +29,7 @@ from sklearn.model_selection import GridSearchCV
 from extractions import pullData
 
 
-def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
+def randomForestReg(target, estimators, df = None, details=False, returnPredictions=False, testSize=0.2):
     if df is None:
         df, targets, features = pullData()
     else:
@@ -88,6 +88,9 @@ def randomForestReg(target, estimators, df = None, details=False, testSize=0.2):
         
         graphFeatureImportance(featureImportance)
         
+    if returnPredictions:
+        return r2, mape, featureImportance, y_test, y_pred
+        
     return r2, mape, featureImportance
 
 def partialLeastSquaresReg(target, components, df = None, details=False, testSize=0.3):
@@ -142,8 +145,7 @@ def partialLeastSquaresReg(target, components, df = None, details=False, testSiz
         
         
     #return r2, mse, d2, gamma_dev, mape
-    return r2, mse, d2, mape
-    
+    return r2, mse
 
 def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
     if df is None:
@@ -279,10 +281,10 @@ def graphRFEst(target, start, stop, step=1, df=None):
     plt.xlabel('n_estimators')                
     plt.ylabel('R2')    
     
-def graphPLSRComp(target, start, stop, step=1):
+def graphPLSRComp(df, target, start, stop, step=1):
     r2s = []
     for n_components in range(start, stop, step):
-        r2, mse, d2, mape = partialLeastSquaresReg(target, n_components)
+        r2, mse = partialLeastSquaresReg(target, n_components, df)
         r2s.append(r2)
         
     plt.figure()
@@ -555,8 +557,6 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     plt.tight_layout()
     plt.show()
     
-    
-    
 def graphFeatureImportance(df):
 
     # Plot Line Graph
@@ -587,7 +587,61 @@ def graphFeatureImportance(df):
     plt.show()
     
     
+def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensionality = 'reduced'):
+    rows= []
+    dfs = {}
+    #testValues = [0.2, 0.3, 0.5]
+    test = 0.25
+    
+    # Allow user to pass multiple dfs to compare model results
+    if df is None:
+        df, targets, features = pullData()
+        dfs.append(df)
+    else:
+        dfs = df
+    
+    for df in dfs:
+        # Benchmark RF models
+        for x in range(0, iterations, 1):
+            r2, mape, importance = randomForestReg(target, 100, dfs.get(df), False, testSize=test)
+            rows.append({'Index': x,
+                     'Category': 'RFR ' + df,
+                     'R2': r2, 
+                     'MAPE': mape,
+                     'Importance': importance})
+        
+        # Benchmark PLSR models
+        for x in range(0, iterations, 1):
+            r2, mape = partialLeastSquaresReg(target, 3, dfs.get(df), False, testSize=test)
+            rows.append({'Index': x,
+                     'Category': 'PLSR ' + df,
+                     'R2': r2, 
+                     'MAPE': mape,
+                     'Importance': importance})
+            
 
+    # Graph box plot of accuracy at different test values
+    df = pd.DataFrame(rows)
+    plt.figure()
+    plt.figure(figsize=(10, 8))
+    sns.set(font_scale=2.5)
+    sns.boxplot(x='Category', y='R2', data=df)
+    plt.title('Comparison of Regression Model Performance')
+    plt.xlabel('Model, Input data')
+    plt.ylabel('Accuracy ($R^2$)')
+    plt.ylim(bottom=-2, top=1)
+    plt.show()
+        
 
-
+def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100):
+    rows = []
+    test = 0.25
+    
+    for x in range(0, iterations, 1):
+        r2, mape, importance, y_test, y_pred = randomForestReg(target, 100, df, details=False, returnPredictions=True, testSize=test)
+        rows.append({'Index': x,
+                 'Category': test,
+                 'R2': r2, 
+                 'MAPE': mape,
+                 'Importance': importance})
 
