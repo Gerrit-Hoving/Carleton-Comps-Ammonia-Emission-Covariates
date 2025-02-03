@@ -56,11 +56,11 @@ input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 #partialLeastSquaresReg('NH3 (kg/h)', 8, df=input_df, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
-graphPLSRComp('NH3 (kg/h)', 5, 10, 1)
+#graphPLSRComp('NH3 (kg/h)', 5, 10, 1)
 #graphRFEst('NH3 (kg/h)', 5, 500, 5, input_df)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
-#graphRFRegStability('NH3 (kg/h)', 200, df=input_df, iterations = 1000, dimensionality='reduced')
+graphRFRegStability('NH3 (kg/h)', 200, df=input_df, iterations = 100, dimensionality='reduced')
 
 ### Decent figures
 

@@ -118,18 +118,16 @@ def pullData(farms = 'CARB', mode = 'EMIT', file = CARB_CAFOS_EMIT_SUBSET_PATH):
         cafos_df = cafos_df.rename(columns={'CARB_ID': 'CAFO_ID'})
         
         if(mode == 'EMIT'):
-            raster_df = pd.read_csv(file)
-            raster_df = pd.merge(cafos_df, raster_df, left_index = True, right_index = True)
-            raster_df = raster_df.drop(columns=['Unnamed: 0'])
+            feature_df = pd.read_csv(file)
+            feature_df = pd.merge(cafos_df, feature_df, left_index = True, right_index = True)
+            feature_df = feature_df.drop(columns=['Unnamed: 0'])
             
             # Perfrom one-hot encoding on region variable for RF compatability 
-            raster_df = pd.get_dummies(raster_df, columns=['Region'])
+            feature_df = pd.get_dummies(feature_df, columns=['Region'])
             
         target_df = pd.merge(emission_df, factor_df, on='CAFO_ID', how='left')
-        target_df = pd.merge(target_df, cafos_df, on='CAFO_ID', how='left')
         target_df = target_df.fillna(0)
-        target_df = target_df.drop(columns=['Region'])
-        
+
     elif (farms == 'HyTES'):
         nh3_df = pd.read_csv(HYTES_NH3_PATH)
         nh3_df = nh3_df.drop(columns=['Unnamed: 0'])
@@ -139,11 +137,11 @@ def pullData(farms = 'CARB', mode = 'EMIT', file = CARB_CAFOS_EMIT_SUBSET_PATH):
         cafos_df = cafos_df.rename(columns={'ID': 'CAFO_ID'})
     
         if(mode == 'EMIT'):
-            raster_df = pd.read_csv(HYTES_CAFOS_EMIT_BANDAVG_PATH)
-            raster_df = raster_df.rename(columns={'Unnamed: 0': 'CAFO_ID'})
-            raster_df['CAFO_ID'] = raster_df['CAFO_ID'] + 1
+            feature_df = pd.read_csv(HYTES_CAFOS_EMIT_BANDAVG_PATH)
+            feature_df = feature_df.rename(columns={'Unnamed: 0': 'CAFO_ID'})
+            feature_df['CAFO_ID'] = feature_df['CAFO_ID'] + 1
             # Double checks to make sure nans set coreectly
-            raster_df[raster_df <= 0] = np.nan
+            feature_df[feature_df <= 0] = np.nan
             
         # Combine CAFO attributes and NH3 emissions data to get feedlot data
         target_df = pd.merge(cafos_df, nh3_df, on='CAFO_ID', how='left')
@@ -151,7 +149,7 @@ def pullData(farms = 'CARB', mode = 'EMIT', file = CARB_CAFOS_EMIT_SUBSET_PATH):
         target_df['HyTES_NH3_Detect'] = target_df['NH3_mean'] != 0
         
     # Merge with raster data
-    full_df = pd.merge(target_df, raster_df, on='CAFO_ID', how='left')
+    full_df = pd.merge(target_df, feature_df, on='CAFO_ID', how='left')
         
     # Create lists of targets and features for easier use with RF
     target_list = list(target_df.columns)
