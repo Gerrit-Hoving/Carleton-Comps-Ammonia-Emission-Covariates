@@ -58,32 +58,30 @@ reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 input_df_full = pd.concat([attributes_df['NH3 (kg/h)'], bands_plus_df], axis=1)
 input_df_bands = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 input_df_pca = pd.concat([attributes_df['NH3 (kg/h)'], reduced_df], axis=1)
+input_df_fullysampled = 0 # Work on and test eventually 
 
 input_df_random = input_df_full.copy()
 input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).reset_index(drop=True)
 
-#input_df = input_df.iloc[:-3]
 
 #r2, mape, importance, y_test, y_pred = randomForestReg('NH3 (kg/h)', 300, df=input_df, returnPredictions=True, testSize=0.3)
 #randomForestReg('NH3 (kg/h)', 300, df=input_df, details=True, testSize=0.3)
 #partialLeastSquaresReg('NH3 (kg/h)', 8, df=input_df, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
-#graphPLSRComp(input_df, 'NH3 (kg/h)', 2, 10, 1)
-#graphRFEst('NH3 (kg/h)', 5, 500, 5, input_df)
+#graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 10, 1)
+#graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_full)
+#graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_bands)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
-#graphRFRegStability('NH3 (kg/h)', 200, df=input_df, iterations = 1000, dimensionality='reduced')
-
-
-comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'PCA':input_df_pca, 'random':input_df_random}
-graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=1000)
+#graphRFRegStability('NH3 (kg/h)', 200, df=input_df_full, iterations = 100, dimensionality='reduced')
+#graphRFRegStability('NH3 (kg/h)', 200, df=input_df_bands, iterations = 100, dimensionality='reduced')
 
 #graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='PLS')
 
 
 ### Decent figures
-
-#graphRFEst('NH3 (kg/h)', 5, 300, 1)
+comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
+graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
 
 

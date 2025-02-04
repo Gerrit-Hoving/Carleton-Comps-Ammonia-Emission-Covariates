@@ -274,7 +274,7 @@ def findParams(target, checkModel, df = None):
 def graphRFEst(target, start, stop, step=1, df=None):
     r2s = []
     for n_estimators in range(start, stop, step):
-        r2, mse, d2, mape = randomForestReg(target, n_estimators, df)
+        r2, mape, importance = randomForestReg(target, n_estimators, df, testSize=0.3)
         r2s.append(r2)
         
     plt.figure()
@@ -475,7 +475,7 @@ def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, df=Non
 def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iterations = 100, dimensionality = 'reduced'):
     rows= []
     #testValues = [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
-    testValues = [0.1, 0.2, 0.3, 0.5, 0.7, 0.9]
+    testValues = [0.1, 0.2, 0.25, 0.3, 0.5, 0.8]
     #testValues = [0.2]
     
     if df is None:
@@ -588,12 +588,11 @@ def graphFeatureImportance(df):
     #plt.tight_layout()
     plt.show()
     
-    
 def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensionality = 'reduced'):
     rows= []
     dfs = {}
     #testValues = [0.2, 0.3, 0.5]
-    test = 0.25
+    test = 0.3
     
     # Allow user to pass multiple dfs to compare model results
     if df is None:
@@ -614,7 +613,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
         
         # Benchmark PLSR models
         for x in range(0, iterations, 1):
-            r2, mape = partialLeastSquaresReg(target, 3, dfs.get(df), False, testSize=test)
+            r2, mape = partialLeastSquaresReg(target, 8, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
                      'Category': 'PLSR, ' + df,
                      'R2': r2, 
