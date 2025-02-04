@@ -93,7 +93,7 @@ def randomForestReg(target, estimators, df = None, details=False, returnPredicti
         
     return r2, mape, featureImportance
 
-def partialLeastSquaresReg(target, components, df = None, details=False, testSize=0.3):
+def partialLeastSquaresReg(target, components, df=None, details=False, returnPredictions=False, testSize=0.3):
     if df is None:
         df, targets, features = pullData()
     else:
@@ -143,7 +143,9 @@ def partialLeastSquaresReg(target, components, df = None, details=False, testSiz
         plt.text(0.8, 0.1, f'$R^2_s = {r_squared:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
         plt.text(0.76, 0.01, f'$R^2 = {r2:.2f}$', transform=plt.gca().transAxes, fontsize=12, color='green')
         
-        
+    if returnPredictions:
+        return r2, mse, y_test, y_pred
+    
     #return r2, mse, d2, gamma_dev, mape
     return r2, mse
 
@@ -605,7 +607,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
         for x in range(0, iterations, 1):
             r2, mape, importance = randomForestReg(target, 100, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
-                     'Category': 'RFR ' + df,
+                     'Category': 'RFR, ' + df,
                      'R2': r2, 
                      'MAPE': mape,
                      'Importance': importance})
@@ -614,7 +616,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
         for x in range(0, iterations, 1):
             r2, mape = partialLeastSquaresReg(target, 3, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
-                     'Category': 'PLSR ' + df,
+                     'Category': 'PLSR, ' + df,
                      'R2': r2, 
                      'MAPE': mape,
                      'Importance': importance})
@@ -630,18 +632,47 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
     plt.xlabel('Model, Input data')
     plt.ylabel('Accuracy ($R^2$)')
     plt.ylim(bottom=-2, top=1)
+    plt.xticks(rotation=90)
     plt.show()
         
 
-def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100):
+def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100, model = 'RF'):
     rows = []
     test = 0.25
     
-    for x in range(0, iterations, 1):
-        r2, mape, importance, y_test, y_pred = randomForestReg(target, 100, df, details=False, returnPredictions=True, testSize=test)
-        rows.append({'Index': x,
-                 'Category': test,
-                 'R2': r2, 
-                 'MAPE': mape,
-                 'Importance': importance})
+    if model == 'RF':
+        for x in range(0, iterations, 1):
+            r2, mape, importance, y_test, y_pred = randomForestReg(target, 100, df, details=False, returnPredictions=True, testSize=test)
+            
+            y_test = y_test.to_numpy()
+            
+            for y in range(0, len(y_pred), 1):
+                rows.append({'Test': y_test[y],
+                         'Predicted': y_pred[y]})
+                
+    if model == 'PLS':
+        for x in range(0, iterations, 1):
+            r2, mape, y_test, y_pred = partialLeastSquaresReg(target, 3, df, details=False, returnPredictions=True, testSize=test)
+            
+            y_test = y_test.to_numpy()
+            
+            for y in range(0, len(y_pred), 1):
+                rows.append({'Test': y_test[y],
+                         'Predicted': y_pred[y]})
+            
+    df = pd.DataFrame(rows)
+
+    plt.figure(figsize=(10, 8))
+    sns.scatterplot(x='Test', y='Predicted', data=df)
+    sns.set(font_scale=2.5)
+    plt.xlim(left=0, right=200)
+    plt.ylim(bottom=0, top=200)
+    plt.title(model + ' Regression Model Predictions')
+    plt.xlabel('Test')
+    plt.ylabel('Predicted')
+    # Add 1-1 Line
+    plt.plot([0, 200], [0, 200], color='red', linestyle='--', label='1:1 line')
+    # Add regression line
+    sns.regplot(x='Test', y='Predicted', scatter=False, color='blue', label='Linear regression line', data=df)
+    plt.show()
 

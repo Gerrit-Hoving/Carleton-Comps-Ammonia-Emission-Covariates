@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 from analysis import randomForestReg, partialLeastSquaresReg
-from analysis import graphRFRegStability, graphCompareModels
+from analysis import graphRFRegStability, graphCompareModels, graphModelPredictions
 from analysis import graphRFEst
 from analysis import graphPLSRComp
 
@@ -20,25 +20,31 @@ from extractions import pullData
 
 
 ### Testing RF on reduction of bands via PCA
-in_df, targets, features = pullData()
+in_df, all_targets, all_features = pullData()
+min_in_df, min_targets, min_features = pullData(extra_vars=False)
 
 # Drop bad bands
 clean_df = in_df.dropna(axis=1, how='all')
 
-# Drop those bands from features list
-features = [item for item in clean_df.columns if item in features]
+# Optionally drop rows without cow number or drop cow number
+#clean_df = clean_df[clean_df['Cows (head)'] != 0]
+clean_df = clean_df.drop('Cows (head)', axis=1)
 
-# Optionally drop rows without emission factors
-#clean_df = clean_df[clean_df['NH3 (g/head/h) Avg'] != 0]
+# Drop those bands from features list
+all_features = [item for item in clean_df.columns if item in all_features]
+min_features = [item for item in clean_df.columns if item in min_features]
 
 # Drop empty rows
 clean_df = clean_df.dropna(axis=0, how='any')
 
-bands_df = clean_df[features]
-attributes_df = clean_df[targets]
+# Select features 
+bands_df = clean_df[min_features]
+bands_plus_df = clean_df[all_features]
 
+attributes_df = clean_df[all_targets]
+
+# Run PCA
 pca = PCA(n_components=10)
-
 pca.fit(bands_df)
 
 print(pca.explained_variance_ratio_)
@@ -48,10 +54,17 @@ reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 
 #reduced_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
 
-input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
+# Creat df with all predictors, with only bands, and with pca reduced bands
+input_df_full = pd.concat([attributes_df['NH3 (kg/h)'], bands_plus_df], axis=1)
+input_df_bands = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
+input_df_pca = pd.concat([attributes_df['NH3 (kg/h)'], reduced_df], axis=1)
+
+input_df_random = input_df_full.copy()
+input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).reset_index(drop=True)
 
 #input_df = input_df.iloc[:-3]
 
+#r2, mape, importance, y_test, y_pred = randomForestReg('NH3 (kg/h)', 300, df=input_df, returnPredictions=True, testSize=0.3)
 #randomForestReg('NH3 (kg/h)', 300, df=input_df, details=True, testSize=0.3)
 #partialLeastSquaresReg('NH3 (kg/h)', 8, df=input_df, details=True, testSize=0.3)
 
@@ -63,8 +76,11 @@ input_df = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 #graphRFRegStability('NH3 (kg/h)', 200, df=input_df, iterations = 1000, dimensionality='reduced')
 
 
-comparison_dfs = {'base':input_df}
-graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs)
+comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'PCA':input_df_pca, 'random':input_df_random}
+graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=1000)
+
+#graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='PLS')
+
 
 ### Decent figures
 

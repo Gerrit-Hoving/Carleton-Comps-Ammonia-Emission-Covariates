@@ -16,7 +16,7 @@ import os
 import fiona
 
 # File path parameters
-CARB_CAFOS_PATH = r'D:\Documents\Projects\comps\data\CAFOs_CARB_Atttributes.csv'
+CARB_CAFOS_PATH = r'D:\Documents\Projects\comps\data\CAFOs_CARB_Attributes.csv'
 CARB_EMISSION_PATH = r'D:\Documents\Projects\comps\data\CAFOs_CARB_Emissions.csv'
 CARB_EFACTOR_PATH = r'D:\Documents\Projects\comps\data\CAFOs_CARB_EmissionFactors.csv'
 
@@ -106,7 +106,7 @@ def extractAvgAcrossRasters(rasterFolder, vectorPath, layer = None, stats = ['me
     return median_df, full_df
 
 
-def pullData(farms = 'CARB', mode = 'EMIT', file = CARB_CAFOS_EMIT_SUBSET_PATH):
+def pullData(farms = 'CARB', mode = 'EMIT', file = CARB_CAFOS_EMIT_SUBSET_PATH, extra_vars=True):
     if (farms == 'CARB'):
         emission_df = pd.read_csv(CARB_EMISSION_PATH)
         emission_df = emission_df.rename(columns={'CAFO': 'CAFO_ID'})
@@ -119,11 +119,15 @@ def pullData(farms = 'CARB', mode = 'EMIT', file = CARB_CAFOS_EMIT_SUBSET_PATH):
         
         if(mode == 'EMIT'):
             feature_df = pd.read_csv(file)
-            feature_df = pd.merge(cafos_df, feature_df, left_index = True, right_index = True)
             feature_df = feature_df.drop(columns=['Unnamed: 0'])
             
-            # Perfrom one-hot encoding on region variable for RF compatability 
-            feature_df = pd.get_dummies(feature_df, columns=['Region'])
+            feature_df = pd.merge(cafos_df, feature_df, left_index = True, right_index = True)
+            if(extra_vars):
+                # Perfrom one-hot encoding on region variable for RF compatability 
+                feature_df = pd.get_dummies(feature_df, columns=['Region'])
+            else:
+                feature_df = feature_df.drop(['Region', 'Cows (head)', 'FeaturePond', 'FeaturePiles', 'PenArea (m2)', 'OverallArea (m2)'], axis=1)
+
             
         target_df = pd.merge(emission_df, factor_df, on='CAFO_ID', how='left')
         target_df = target_df.fillna(0)
