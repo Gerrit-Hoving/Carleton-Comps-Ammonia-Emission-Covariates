@@ -20,10 +20,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import d2_absolute_error_score, mean_gamma_deviance, mean_absolute_percentage_error
 from sklearn.model_selection import GridSearchCV
 
 from extractions import pullData
@@ -52,10 +52,10 @@ def randomForestReg(target, estimators, df = None, details=False, returnPredicti
     y_pred = model.predict(X_test)
     
     # Evaluate the model
-    mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    d2 = d2_absolute_error_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
     mape = mean_absolute_percentage_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
     
     featureImportance = pd.DataFrame({
     'Feature': X.columns,
@@ -89,9 +89,9 @@ def randomForestReg(target, estimators, df = None, details=False, returnPredicti
         graphFeatureImportance(featureImportance)
         
     if returnPredictions:
-        return r2, mape, featureImportance, y_test, y_pred
+        return r2, mae, mape, featureImportance, y_test, y_pred
         
-    return r2, mape, featureImportance
+    return r2, mae, mape, featureImportance
 
 def partialLeastSquaresReg(target, components, df=None, details=False, returnPredictions=False, testSize=0.3):
     if df is None:
@@ -117,10 +117,10 @@ def partialLeastSquaresReg(target, components, df=None, details=False, returnPre
     y_pred = pls_model.predict(X_test)
     
     # Evaluate the model
-    mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    d2 = d2_absolute_error_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
     mape = mean_absolute_percentage_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
     
     if details:
         print('\nPLS results: ')
@@ -146,8 +146,7 @@ def partialLeastSquaresReg(target, components, df=None, details=False, returnPre
     if returnPredictions:
         return r2, mse, y_test, y_pred
     
-    #return r2, mse, d2, gamma_dev, mape
-    return r2, mse
+    return r2, mae, mape
 
 def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
     if df is None:
@@ -274,7 +273,7 @@ def findParams(target, checkModel, df = None):
 def graphRFEst(target, start, stop, step=1, df=None):
     r2s = []
     for n_estimators in range(start, stop, step):
-        r2, mape, importance = randomForestReg(target, n_estimators, df, testSize=0.3)
+        r2, mae, mape, importance = randomForestReg(target, n_estimators, df, testSize=0.3)
         r2s.append(r2)
         
     plt.figure()
@@ -286,7 +285,7 @@ def graphRFEst(target, start, stop, step=1, df=None):
 def graphPLSRComp(df, target, start, stop, step=1):
     r2s = []
     for n_components in range(start, stop, step):
-        r2, mse = partialLeastSquaresReg(target, n_components, df)
+        r2, mae, mape = partialLeastSquaresReg(target, n_components, df)
         r2s.append(r2)
         
     plt.figure()
@@ -483,7 +482,7 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     
     for test in testValues:
         for x in range(0, iterations, 1):
-            r2, mape, importance = randomForestReg(target, n_estimators, df, False, testSize=test)
+            r2, mae, mape, importance = randomForestReg(target, n_estimators, df, False, testSize=test)
             rows.append({'Index': x,
                      'Category': test,
                      'R2': r2, 
@@ -604,19 +603,21 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
     for df in dfs:
         # Benchmark RF models
         for x in range(0, iterations, 1):
-            r2, mape, importance = randomForestReg(target, 100, dfs.get(df), False, testSize=test)
+            r2, mae, mape, importance = randomForestReg(target, 100, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
                      'Category': 'RFR, ' + df,
                      'R2': r2, 
+                     'MAE': mae,
                      'MAPE': mape,
                      'Importance': importance})
         
         # Benchmark PLSR models
         for x in range(0, iterations, 1):
-            r2, mape = partialLeastSquaresReg(target, 8, dfs.get(df), False, testSize=test)
+            r2, mae, mape = partialLeastSquaresReg(target, 8, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
                      'Category': 'PLSR, ' + df,
                      'R2': r2, 
+                     'MAE': mae,
                      'MAPE': mape,
                      'Importance': importance})
             
@@ -634,14 +635,13 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
     plt.xticks(rotation=90)
     plt.show()
         
-
 def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100, model = 'RF'):
     rows = []
     test = 0.25
     
     if model == 'RF':
         for x in range(0, iterations, 1):
-            r2, mape, importance, y_test, y_pred = randomForestReg(target, 100, df, details=False, returnPredictions=True, testSize=test)
+            r2, mae, mape, importance, y_test, y_pred = randomForestReg(target, 100, df, details=False, returnPredictions=True, testSize=test)
             
             y_test = y_test.to_numpy()
             
@@ -651,7 +651,7 @@ def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100, mode
                 
     if model == 'PLS':
         for x in range(0, iterations, 1):
-            r2, mape, y_test, y_pred = partialLeastSquaresReg(target, 3, df, details=False, returnPredictions=True, testSize=test)
+            r2, mae, mape, y_test, y_pred = partialLeastSquaresReg(target, 3, df, details=False, returnPredictions=True, testSize=test)
             
             y_test = y_test.to_numpy()
             
