@@ -471,10 +471,10 @@ def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, df=Non
     plt.tight_layout()
     plt.show()
     
-def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iterations = 100, dimensionality = 'reduced'):
+def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iterations = 100, importance_tt_level=None):
     rows= []
     #testValues = [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
-    testValues = [0.1, 0.2, 0.25, 0.3, 0.5, 0.8]
+    testValues = [0.1, 0.2, 0.3, 0.5, 0.8]
     #testValues = [0.2]
     
     if df is None:
@@ -502,47 +502,51 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     plt.ylim(bottom=-2, top=1)
     plt.show()
     
-    # Get importance values and statistics
-    imp_df = pd.DataFrame()
-    for row in rows:
-        if row['Category'] == 0.2:
-            imp_values = row['Importance']['Importance'].values
-            features = row['Importance']['Feature']
-            
-            imps_as_row = pd.DataFrame([imp_values], columns=features)
-            imp_df = pd.concat([imp_df, imps_as_row], ignore_index=True)
+    if importance_tt_level is not None:
+        # Get importance values and statistics
+        imp_df = pd.DataFrame()
+        for row in rows:
+            if row['Category'] == 0.3:
+                imp_values = row['Importance']['Importance'].values
+                features = row['Importance']['Feature']
+                
+                imps_as_row = pd.DataFrame([imp_values], columns=features)
+                imp_df = pd.concat([imp_df, imps_as_row], ignore_index=True)
+    
+        mean_values = imp_df.mean()
+        std_values = imp_df.std()
+        
+        # Combine means and standard deviations into a DataFrame
+        stats_df = pd.DataFrame({
+            'Mean': mean_values,
+            'Std Dev': std_values
+        })
+        
+        stats_df = stats_df * 100
+        
+        stats_df = stats_df.reset_index()
+        stats_df.columns = ['Feature', 'Mean', 'Std Dev']
+        
+        return stats_df
+    
+def graphFeatureImportance(imp_df):
+    bands_df = imp_df[imp_df['Feature'].str.contains('band', case=False)]
+    other_df = imp_df[~imp_df['Feature'].str.contains('band', case=False)]   
 
-    mean_values = imp_df.mean()
-    std_values = imp_df.std()
-    
-    # Combine means and standard deviations into a DataFrame
-    stats_df = pd.DataFrame({
-        'Mean': mean_values,
-        'Std Dev': std_values
-    })
-    
-    stats_df = stats_df * 100
-    
-    stats_df = stats_df.reset_index()
-    stats_df.columns = ['Band Number', 'Mean', 'Std Dev']
-    
     plt.figure(figsize=(10, 8))
     sns.set(font_scale=1.5)
     
-    # Line plot for mean with ±1 standard deviation
-    stats_df = stats_df.iloc[:-1]
-    
-    sns.lineplot(data=stats_df, x=stats_df.index, y='Mean', label='Mean', marker='o', color='b')
-    plt.fill_between(stats_df.index, stats_df['Mean'] - stats_df['Std Dev'], stats_df['Mean'] + stats_df['Std Dev'], color='b', alpha=0.2, label='±1 Std Dev')
+    sns.lineplot(data=bands_df, x=bands_df.index, y='Mean', label='Mean', marker='o', color='b')
+    plt.fill_between(bands_df.index, bands_df['Mean'] - bands_df['Std Dev'], bands_df['Mean'] + bands_df['Std Dev'], color='b', alpha=0.2, label='±1 Std Dev')
     
     # Add smoothed line (LOWESS)
     lowess = sm.nonparametric.lowess
-    print(stats_df.index)
-    smooth = lowess(stats_df['Mean'], stats_df.index, frac=0.05)
-    plt.plot(stats_df.index, smooth[:, 1], color='red', label='Smoothed')
+    print(bands_df.index)
+    smooth = lowess(bands_df['Mean'], bands_df.index, frac=0.05)
+    plt.plot(bands_df.index, smooth[:, 1], color='red', label='Smoothed')
     
     plt.title('Importance vs Band Name')
-    plt.xticks(ticks=[0, len(stats_df)-1], labels=['380', '2500'])
+    plt.xticks(ticks=[0, len(bands_df)-1], labels=['380', '2500'])
     plt.xlabel('Wavelength (nm)')
     
     # Set the minimum y-axis value to 0
@@ -552,37 +556,36 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     # Add plot title and labels
     plt.title('Mean Importance and ±1 Standard Deviation')
     plt.xlabel('Wavelength')
-    plt.ylabel('Average Importance, ' + str(iterations) + ' models')
+    plt.ylabel('Average Importance, 100 models')
     plt.legend()
     
     plt.tight_layout()
     plt.show()
     
-def graphFeatureImportance(df):
 
     # Plot Line Graph
-    plt.figure(figsize=(12, 6))
-    sns.set(font_scale=1.5)
+    #plt.figure(figsize=(12, 6))
+    #sns.set(font_scale=1.5)
     
     #plt.subplot(1, 2, 1)  # (rows, cols, panel number)
-    sns.lineplot(x='Feature', y='Importance', data=df, marker='o')
+    #sns.lineplot(x='Feature', y='Importance', data=bands_df, marker='o')
     
     # Add smoothed line (LOWESS)
-    lowess = sm.nonparametric.lowess
-    smooth = lowess(df['Importance'], df.index, frac=0.1)
-    plt.plot(df.index, smooth[:, 1], color='red', label='Smoothed')
+    #lowess = sm.nonparametric.lowess
+    #smooth = lowess(df['Importance'], df.index, frac=0.1)
+    #plt.plot(df.index, smooth[:, 1], color='red', label='Smoothed')
     
-    plt.title('Importance vs Band Name')
-    plt.xticks([0, 284])
-    plt.xlabel('EMIT Band Number')
-    '''
-    # Plot Bar Chart for Top 10 Values
-    top_10_df = df.nlargest(8, 'Importance')
+    #plt.title('Importance vs Band Name')
+    #plt.xticks([0, 284])
+    #plt.xlabel('EMIT Band Number')
+    
+    # Plot Bar Chart for Top n Values
+    top_df = imp_df.nlargest(6, 'Mean')
     
     #plt.subplot(1, 2, 2)
-    sns.barplot(x='Importance', y='Feature', data=top_10_df, palette='viridis')
-    plt.title('Top 10 Importance Values')
-    '''
+    sns.barplot(x='Mean', y='Feature', data=top_df, palette='viridis')
+    plt.title('Top 6 Importance Values')
+    
     # Adjust layout
     #plt.tight_layout()
     plt.show()

@@ -12,7 +12,7 @@ from sklearn.decomposition import PCA
 
 from analysis import randomForestReg, partialLeastSquaresReg
 from analysis import graphRFRegStability, graphCompareModels, graphModelPredictions
-from analysis import graphRFEst
+from analysis import graphRFEst, graphFeatureImportance
 from analysis import graphPLSRComp
 
 from extractions import pullData
@@ -27,7 +27,7 @@ min_in_df, min_targets, min_features = pullData(extra_vars=False)
 clean_df = in_df.dropna(axis=1, how='all')
 
 # Optionally drop rows without cow number or drop cow number
-#clean_df = clean_df[clean_df['Cows (head)'] != 0]
+#clean_df_fully_sampled = clean_df[clean_df['Cows (head)'] != 0]
 clean_df = clean_df.drop('Cows (head)', axis=1)
 
 # Drop those bands from features list
@@ -74,14 +74,15 @@ input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).res
 #graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_bands)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
-#graphRFRegStability('NH3 (kg/h)', 200, df=input_df_full, iterations = 100, dimensionality='reduced')
+imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=100, importance_tt_level=0.3)
+graphFeatureImportance(imp_df)
 #graphRFRegStability('NH3 (kg/h)', 200, df=input_df_bands, iterations = 100, dimensionality='reduced')
 
 #graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='PLS')
 
 
 ### Decent figures
-comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
-graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
+#comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
+#graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
 
 
