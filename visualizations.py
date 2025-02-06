@@ -21,25 +21,36 @@ from extractions import pullData
 
 ### Testing RF on reduction of bands via PCA
 in_df, all_targets, all_features = pullData()
-min_in_df, min_targets, min_features = pullData(extra_vars=False)
+band_in_df, band_targets, band_features = pullData(extra_vars=False)
 
 # Drop bad bands
 clean_df = in_df.dropna(axis=1, how='all')
 
-# Optionally drop rows without cow number or drop cow number
-#clean_df_fully_sampled = clean_df[clean_df['Cows (head)'] != 0]
-clean_df = clean_df.drop('Cows (head)', axis=1)
+# Drop unsampled farms for full variable model
+clean_df_all_vars = clean_df[clean_df['Cows (head)'] != 0]
 
-# Drop those bands from features list
-all_features = [item for item in clean_df.columns if item in all_features]
-min_features = [item for item in clean_df.columns if item in min_features]
+# Drop incompletely sampled variables
+clean_df = clean_df.drop('Cows (head)', axis=1)
+clean_df = clean_df.drop('CH4 Cover', axis=1)
+
+
+# Drop unused vars from feature lists
+band_features = [item for item in clean_df.columns if item in band_features]
+fully_sampled_features = [item for item in clean_df.columns if item in all_features]
+
+all_features = [item for item in clean_df_all_vars.columns if item in all_features]
+
 
 # Drop empty rows
 clean_df = clean_df.dropna(axis=0, how='any')
+clean_df_all_vars = clean_df_all_vars.dropna(axis=0, how='any')
+clean_df_all_vars['CH4 Cover'] = clean_df_all_vars['CH4 Cover'] == 'Y'
+
 
 # Select features 
-bands_df = clean_df[min_features]
-bands_plus_df = clean_df[all_features]
+bands_df = clean_df[band_features]
+bands_plus_allfarms_df = clean_df[fully_sampled_features]
+bands_plus_allvars_df = clean_df_all_vars[all_features]
 
 attributes_df = clean_df[all_targets]
 
@@ -55,10 +66,11 @@ reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 #reduced_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
 
 # Creat df with all predictors, with only bands, and with pca reduced bands
-input_df_full = pd.concat([attributes_df['NH3 (kg/h)'], bands_plus_df], axis=1)
+input_df_full = pd.concat([attributes_df['NH3 (kg/h)'], bands_plus_allfarms_df], axis=1)
 input_df_bands = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
 input_df_pca = pd.concat([attributes_df['NH3 (kg/h)'], reduced_df], axis=1)
-input_df_fullysampled = 0 # Work on and test eventually 
+input_df_fullysampled = pd.concat([attributes_df['NH3 (kg/h)'], bands_plus_allvars_df], axis=1)
+input_df_fullysampled = input_df_fullysampled.dropna(axis=0, how='any')
 
 input_df_random = input_df_full.copy()
 input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).reset_index(drop=True)
@@ -74,15 +86,20 @@ input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).res
 #graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_bands)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
-imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=1000, importance_tt_level=0.3)
-graphFeatureImportance(imp_df)
+
 #graphRFRegStability('NH3 (kg/h)', 200, df=input_df_bands, iterations = 100, dimensionality='reduced')
 
 #graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='PLS')
 
+#comparison_dfs = {'allfarms':input_df_full, 'allvars': input_df_fullysampled, 'bands':input_df_bands, 'random':input_df_random}
+#graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
+
 
 ### Decent figures
-#comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
-#graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
+comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
+graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
+
+#imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=1000, importance_tt_level=0.3)
+#graphFeatureImportance(imp_df)
 
 
