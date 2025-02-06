@@ -274,6 +274,6 @@ raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1
 #raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004_radiance'  
 #raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003_radiance'  
 
-matchedFilter(raster_file, nu, coef, save = True)
+#matchedFilter(raster_file, nu, coef, save = True)
 
 #inOutPlumeGraph(df, ac_df, raster_path)

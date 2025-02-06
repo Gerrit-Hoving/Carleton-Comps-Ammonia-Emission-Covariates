@@ -74,7 +74,7 @@ input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).res
 #graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_bands)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
-imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=100, importance_tt_level=0.3)
+imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=1000, importance_tt_level=0.3)
 graphFeatureImportance(imp_df)
 #graphRFRegStability('NH3 (kg/h)', 200, df=input_df_bands, iterations = 100, dimensionality='reduced')
 

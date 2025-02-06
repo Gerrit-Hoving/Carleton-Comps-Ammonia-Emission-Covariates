@@ -15,6 +15,7 @@ import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
+import re
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
@@ -27,6 +28,9 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import GridSearchCV
 
 from extractions import pullData
+
+
+EMIT_BAND_META_PATH = r'D:\Documents\Projects\comps\data\EMIT\band_metadata.csv'
 
 
 def randomForestReg(target, estimators, df = None, details=False, returnPredictions=False, testSize=0.2):
@@ -496,7 +500,7 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     plt.figure(figsize=(10, 8))
     sns.set(font_scale=2.5)
     sns.boxplot(x='Category', y='R2', data=df)
-    plt.title('Random Forest Regression Model Performance')
+    plt.title('Random Forest Model Performance')
     plt.xlabel('Proportion of Data Reserved for Testing')
     plt.ylabel('Accuracy ($R^2$)')
     plt.ylim(bottom=-2, top=1)
@@ -531,22 +535,32 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     
 def graphFeatureImportance(imp_df):
     bands_df = imp_df[imp_df['Feature'].str.contains('band', case=False)]
-    other_df = imp_df[~imp_df['Feature'].str.contains('band', case=False)]   
+    #other_df = imp_df[~imp_df['Feature'].str.contains('band', case=False)]   
 
+    band_meta = pd.read_csv(EMIT_BAND_META_PATH)
+
+    bands_df['ID'] = bands_df['Feature'].str.extract(r'reflectance_band_(\d+)_median')
+    bands_df['ID'] = bands_df['ID'].astype(int)
+    
+    # Add metadata on band positions to importance information
+    bands_df = pd.merge(bands_df, band_meta, on="ID", how="right")
+    bands_df = bands_df.fillna(0)
+    
+    # Plot line chart of importance over wavelength
     plt.figure(figsize=(10, 8))
     sns.set(font_scale=1.5)
     
-    sns.lineplot(data=bands_df, x=bands_df.index, y='Mean', label='Mean', marker='o', color='b')
-    plt.fill_between(bands_df.index, bands_df['Mean'] - bands_df['Std Dev'], bands_df['Mean'] + bands_df['Std Dev'], color='b', alpha=0.2, label='±1 Std Dev')
+    sns.lineplot(data=bands_df, x='wavelengths', y='Mean', label='Mean', marker='o', color='b')
+    plt.fill_between(bands_df['wavelengths'], bands_df['Mean'] - bands_df['Std Dev'], bands_df['Mean'] + bands_df['Std Dev'], color='b', alpha=0.2, label='±1 Std Dev')
     
     # Add smoothed line (LOWESS)
     lowess = sm.nonparametric.lowess
     print(bands_df.index)
-    smooth = lowess(bands_df['Mean'], bands_df.index, frac=0.05)
-    plt.plot(bands_df.index, smooth[:, 1], color='red', label='Smoothed')
+    smooth = lowess(bands_df['Mean'], bands_df['wavelengths'], frac=0.05)
+    plt.plot(bands_df['wavelengths'], smooth[:, 1], color='red', label='Smoothed')
     
     plt.title('Importance vs Band Name')
-    plt.xticks(ticks=[0, len(bands_df)-1], labels=['380', '2500'])
+    #plt.xticks(ticks=[0, len(bands_df)-1], labels=['380', '2500'])
     plt.xlabel('Wavelength (nm)')
     
     # Set the minimum y-axis value to 0
@@ -562,32 +576,13 @@ def graphFeatureImportance(imp_df):
     plt.tight_layout()
     plt.show()
     
-
-    # Plot Line Graph
-    #plt.figure(figsize=(12, 6))
-    #sns.set(font_scale=1.5)
-    
-    #plt.subplot(1, 2, 1)  # (rows, cols, panel number)
-    #sns.lineplot(x='Feature', y='Importance', data=bands_df, marker='o')
-    
-    # Add smoothed line (LOWESS)
-    #lowess = sm.nonparametric.lowess
-    #smooth = lowess(df['Importance'], df.index, frac=0.1)
-    #plt.plot(df.index, smooth[:, 1], color='red', label='Smoothed')
-    
-    #plt.title('Importance vs Band Name')
-    #plt.xticks([0, 284])
-    #plt.xlabel('EMIT Band Number')
     
     # Plot Bar Chart for Top n Values
     top_df = imp_df.nlargest(6, 'Mean')
-    
-    #plt.subplot(1, 2, 2)
+
     sns.barplot(x='Mean', y='Feature', data=top_df, palette='viridis')
     plt.title('Top 6 Importance Values')
-    
-    # Adjust layout
-    #plt.tight_layout()
+
     plt.show()
     
 def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensionality = 'reduced'):
