@@ -626,7 +626,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
     plt.figure(figsize=(10, 8))
     sns.set(font_scale=2.5)
     sns.boxplot(x='Category', y='R2', data=df)
-    plt.title('Comparison of Regression Model Performance')
+    plt.title('Regression Model Performance')
     plt.xlabel('Model, Input data')
     plt.ylabel('Accuracy ($R^2$)')
     plt.ylim(bottom=-2, top=1)

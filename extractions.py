@@ -24,12 +24,10 @@ HYTES_CAFOS_PATH = r'D:\Documents\Projects\comps\data\cafoAttributes.csv'
 HYTES_NH3_PATH = r'D:\Documents\Projects\comps\data\cafoNH3Aerial.csv'
 
 HYTES_CAFOS_EMIT_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceHyTESLots.csv'
-HYTES_CAFOS_AVIRIS_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\avirisReflectanceHyTESLots.csv'
 CARB_CAFOS_EMIT_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLots.csv'
 CARB_CAFOS_EMIT_ALL_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLotsComplete.csv'
 CARB_CAFOS_EMIT_SUBSET_PATH = r'D:\Documents\Projects\comps\data\emitReflectanceCARBLotsSubset.csv'
 CARB_CAFOS_EMIT_RAD_PATH = r'D:\Documents\Projects\comps\data\emitRadianceCARBLots.csv'
-CARB_CAFOS_AVIRIS_BANDAVG_PATH = r'D:\Documents\Projects\comps\data\avirisReflectanceCARBLots.csv'
 
 
 
