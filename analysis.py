@@ -274,11 +274,18 @@ def findParams(target, checkModel, df = None):
     print("Best Parameters:", grid_search.best_params_)
     print("Best Score:", grid_search.best_score_)
 
-def graphRFEst(target, start, stop, step=1, df=None):
+def graphRFEst(target, start, stop, step=1, df=None, n_runs=1):
     r2s = []
     for n_estimators in range(start, stop, step):
-        r2, mae, mape, importance = randomForestReg(target, n_estimators, df, testSize=0.3)
-        r2s.append(r2)
+        r2_values = []
+        
+        # Run the RFR multiple times and collect R2 values
+        for i in range(n_runs):
+            r2, mae, mape, importance = randomForestReg(target, n_estimators, df, testSize=0.3)
+            r2_values.append(r2)
+            
+        avg_r2 = np.mean(r2_values)
+        r2s.append(avg_r2)
         
     plt.figure()
     plt.scatter(range(start, stop, step), r2s)
@@ -286,12 +293,20 @@ def graphRFEst(target, start, stop, step=1, df=None):
     plt.xlabel('n_estimators')                
     plt.ylabel('R2')    
     
-def graphPLSRComp(df, target, start, stop, step=1):
+def graphPLSRComp(df, target, start, stop, step=1, n_runs=1):
     r2s = []
     for n_components in range(start, stop, step):
-        r2, mae, mape = partialLeastSquaresReg(target, n_components, df)
-        r2s.append(r2)
+        r2_values = []
         
+        # Run the PLSR multiple times and collect R2 values
+        for i in range(n_runs):
+            r2, mae, mape = partialLeastSquaresReg(target, n_components, df)
+            r2_values.append(r2)
+        
+        # Compute the average R2 for the current n_components
+        avg_r2 = np.mean(r2_values)
+        r2s.append(avg_r2)
+       
     plt.figure()
     plt.scatter(range(start, stop, step), r2s)
     plt.title('R2 vs n_components for PLSR at test size = 0.2, HyTES NH3')    
@@ -601,7 +616,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
     for df in dfs:
         # Benchmark RF models
         for x in range(0, iterations, 1):
-            r2, mae, mape, importance = randomForestReg(target, 100, dfs.get(df), False, testSize=test)
+            r2, mae, mape, importance = randomForestReg(target, 150, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
                      'Category': 'RFR, ' + df,
                      'R2': r2, 
@@ -611,7 +626,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
         
         # Benchmark PLSR models
         for x in range(0, iterations, 1):
-            r2, mae, mape = partialLeastSquaresReg(target, 8, dfs.get(df), False, testSize=test)
+            r2, mae, mape = partialLeastSquaresReg(target, 5, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
                      'Category': 'PLSR, ' + df,
                      'R2': r2, 

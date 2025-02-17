@@ -81,8 +81,8 @@ input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).res
 #partialLeastSquaresReg('NH3 (kg/h)', 8, df=input_df, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
-#graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 10, 1)
-#graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_full)
+graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 10, 1, n_runs=100)
+graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_full, n_runs=10)
 #graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_bands)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
@@ -94,6 +94,9 @@ input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).res
 #comparison_dfs = {'allfarms':input_df_full, 'allvars': input_df_fullysampled, 'bands':input_df_bands, 'random':input_df_random}
 #graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
 
+
+
+'''
 import umap
 import matplotlib.pyplot as plt
 labels = pd.concat([input_df_bands.iloc[:, 0], 'subset', input_df_bands.iloc[:, 0]], axis=0)  # First column for color
@@ -101,7 +104,6 @@ labels['dataset'] = ['subset'] * 22 + ['average'] * 22
 data = input_df_bands.iloc[:, 1:]  # Rest of the columns for UMAP
 
 avg_bands, a, b = pullData(file=r'D:\Documents\Projects\comps\data\emitReflectanceCARBLots.csv', extra_vars=False)
-
 avg_bands = avg_bands.dropna(axis=1, how='all')
 avg_bands = avg_bands.drop('CH4 Cover', axis=1)
 
@@ -123,7 +125,7 @@ plt.title('UMAP projection vs emission rate')
 plt.xlabel('UMAP 1')
 plt.ylabel('UMAP 2')
 plt.show()
-
+'''
 
 
 
