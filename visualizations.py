@@ -20,7 +20,7 @@ from extractions import pullData
 
 
 ### Testing RF on reduction of bands via PCA
-in_df, all_targets, all_features = pullData()
+in_df, all_targets, all_features = pullData(normalize=True)
 band_in_df, band_targets, band_features = pullData(extra_vars=False)
 
 # Drop bad bands
@@ -55,20 +55,20 @@ bands_plus_allvars_df = clean_df_all_vars[all_features]
 attributes_df = clean_df[all_targets]
 
 # Run PCA
-pca = PCA(n_components=10)
-pca.fit(bands_df)
+#pca = PCA(n_components=10)
+#pca.fit(bands_df)
 
-print(pca.explained_variance_ratio_)
-print(pca.singular_values_)
+#print(pca.explained_variance_ratio_)
+#print(pca.singular_values_)
 
-reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
+#reduced_df = pd.DataFrame(pca.fit_transform(bands_df))
 
 #reduced_df = pd.concat([attributes_df['NH3 (kg/h)'].reset_index(drop=True), reduced_df], axis=1)
 
 # Creat df with all predictors, with only bands, and with pca reduced bands
 input_df_full = pd.concat([attributes_df['NH3 (kg/h)'], bands_plus_allfarms_df], axis=1)
 input_df_bands = pd.concat([attributes_df['NH3 (kg/h)'], bands_df], axis=1)
-input_df_pca = pd.concat([attributes_df['NH3 (kg/h)'], reduced_df], axis=1)
+#input_df_pca = pd.concat([attributes_df['NH3 (kg/h)'], reduced_df], axis=1)
 input_df_fullysampled = pd.concat([attributes_df['NH3 (kg/h)'], bands_plus_allvars_df], axis=1)
 input_df_fullysampled = input_df_fullysampled.dropna(axis=0, how='any')
 
@@ -81,8 +81,9 @@ input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).res
 #partialLeastSquaresReg('NH3 (kg/h)', 8, df=input_df, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
-graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 10, 1, n_runs=100)
-graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_full, n_runs=10)
+graphPLSRComp(input_df_bands, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
+graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
+#graphRFEst('NH3 (kg/h)', 1, 200, 5, input_df_full, n_runs=1000)
 #graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_bands)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
@@ -91,8 +92,8 @@ graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_full, n_runs=10)
 
 #graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='PLS')
 
-#comparison_dfs = {'allfarms':input_df_full, 'allvars': input_df_fullysampled, 'bands':input_df_bands, 'random':input_df_random}
-#graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
+comparison_dfs = {'allfarms':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
+graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
 
 
 
