@@ -20,6 +20,7 @@ import re
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.cross_decomposition import PLSRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 from sklearn.ensemble import RandomForestClassifier
@@ -99,7 +100,7 @@ def randomForestReg(target, estimators, df = None, details=False, returnPredicti
 
 def partialLeastSquaresReg(target, components, df=None, details=False, returnPredictions=False, testSize=0.3):
     if df is None:
-        df, targets, features = pullData()
+        df, targets, features = pullData(normalize=True)
     else:
         targets = target
     
@@ -151,6 +152,25 @@ def partialLeastSquaresReg(target, components, df=None, details=False, returnPre
         return r2, mse, y_test, y_pred
     
     return r2, mae, mape
+
+def linReg(df, target):
+    X = df.drop(columns=target)  
+    y = df[target]
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+    # Initialize and fit the linear regression model
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    # Predict the values
+    y_pred = model.predict(X_test)
+
+    r2 = r2_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    
+    return r2, mae
+
 
 def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
     if df is None:
@@ -287,10 +307,10 @@ def graphRFEst(target, start, stop, step=1, df=None, n_runs=1):
         avg_r2 = np.mean(r2_values)
         r2s.append(avg_r2)
         
-    plt.figure()
+    plt.figure(figsize=(3, 3))
     plt.scatter(range(start, stop, step), r2s)
-    plt.title('R2 vs n_estimators for Random Forest at test size = 0.3, CARB NH3')    
-    plt.xlabel('n_estimators')                
+    plt.title('Random Forest')    
+    plt.xlabel('n_estimators')      
     plt.ylabel('R2')    
     
 def graphPLSRComp(df, target, start, stop, step=1, n_runs=1):
@@ -307,10 +327,11 @@ def graphPLSRComp(df, target, start, stop, step=1, n_runs=1):
         avg_r2 = np.mean(r2_values)
         r2s.append(avg_r2)
        
-    plt.figure()
+    plt.figure(figsize=(3, 3))
+    plt.rcParams.update({'font.size': 12})
     plt.scatter(range(start, stop, step), r2s)
-    plt.title('R2 vs n_components for PLSR at test size = 0.2, HyTES NH3')    
-    plt.xlabel('n_components')                
+    plt.title('PLSR')    
+    plt.xlabel('n_components')
     plt.ylabel('R2') 
      
 def graphRFClass(target, start, stop, step=1):
@@ -637,15 +658,27 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
 
     # Graph box plot of accuracy at different test values
     df = pd.DataFrame(rows)
-    plt.figure()
-    plt.figure(figsize=(10, 8))
-    sns.set(font_scale=2.5)
+    plt.figure(figsize=(5.5, 4))
+    sns.set(font_scale=1.5)
     sns.boxplot(x='Category', y='R2', data=df)
-    plt.title('Regression Model Performance')
+    plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
     plt.xlabel('Model, Input data')
     plt.ylabel('Accuracy ($R^2$)')
     plt.ylim(bottom=-2, top=1)
     plt.xticks(rotation=90)
+    plt.axhline(y=0, color='red', linestyle='--', linewidth=1)
+    plt.axhline(y=0.63, color='blue', linestyle='--', linewidth=1)
+    plt.show()
+    
+    plt.figure(figsize=(5.5, 4))
+    sns.set(font_scale=1.5)
+    sns.boxplot(x='Category', y='MAE', data=df)
+    plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
+    plt.xlabel('Model, Input data')
+    plt.ylabel('Accuracy (MAE)')
+    plt.ylim(bottom=0)
+    plt.xticks(rotation=90)
+    plt.axhline(y=23.6, color='blue', linestyle='--', linewidth=1)
     plt.show()
         
 def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100, model = 'RF'):

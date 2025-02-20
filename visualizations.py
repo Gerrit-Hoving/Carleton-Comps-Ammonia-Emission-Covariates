@@ -9,8 +9,10 @@ Code for running analysis and eventually replicating figures
 
 import pandas as pd
 from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-from analysis import randomForestReg, partialLeastSquaresReg
+from analysis import randomForestReg, partialLeastSquaresReg, linReg
 from analysis import graphRFRegStability, graphCompareModels, graphModelPredictions
 from analysis import graphRFEst, graphFeatureImportance
 from analysis import graphPLSRComp
@@ -20,7 +22,7 @@ from extractions import pullData
 
 
 ### Testing RF on reduction of bands via PCA
-in_df, all_targets, all_features = pullData(normalize=True)
+in_df, all_targets, all_features = pullData(normalize=False)
 band_in_df, band_targets, band_features = pullData(extra_vars=False)
 
 # Drop bad bands
@@ -75,15 +77,14 @@ input_df_fullysampled = input_df_fullysampled.dropna(axis=0, how='any')
 input_df_random = input_df_full.copy()
 input_df_random['NH3 (kg/h)'] = input_df_random['NH3 (kg/h)'].sample(frac=1).reset_index(drop=True)
 
-
 #r2, mape, importance, y_test, y_pred = randomForestReg('NH3 (kg/h)', 300, df=input_df, returnPredictions=True, testSize=0.3)
 #randomForestReg('NH3 (kg/h)', 300, df=input_df, details=True, testSize=0.3)
-#partialLeastSquaresReg('NH3 (kg/h)', 8, df=input_df, details=True, testSize=0.3)
+#partialLeastSquaresReg('NH3 (kg/h)', 20, df=input_df_full, details=True, testSize=0.3)
 
 #findParams('NH3 (kg/h)', 'RFR', df=input_df)
-graphPLSRComp(input_df_bands, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
-graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
-#graphRFEst('NH3 (kg/h)', 1, 200, 5, input_df_full, n_runs=1000)
+#graphPLSRComp(input_df_bands, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
+#graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
+
 #graphRFEst('NH3 (kg/h)', 1, 200, 1, input_df_bands)
 
 #accuracy, r2, featureImportance, matrix = randomForestClass('HyTES_NH3_Detect', 50, df=input_df)
@@ -92,14 +93,40 @@ graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
 
 #graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='PLS')
 
-comparison_dfs = {'allfarms':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
-graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=100)
+print(linReg(input_df_full[['NH3 (kg/h)', 'OverallArea (m2)']], 'NH3 (kg/h)') )
+print(linReg(input_df_full[['NH3 (kg/h)', 'PenArea (m2)', ]], 'NH3 (kg/h)') )
+print(linReg(input_df_full[['NH3 (kg/h)', 'OverallArea (m2)', 'PenArea (m2)']], 'NH3 (kg/h)') )
+print(linReg(input_df_full, 'NH3 (kg/h)') )
 
 
+
+comparison_dfs = {'all':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
+graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=500)
+
+'''
+plt.figure(figsize=(5.5,4))
+#plt.scatter('OverallArea (m2)', 'NH3 (kg/h)', data=input_df_full)
+sns.regplot(x='OverallArea (m2)', y='NH3 (kg/h)', data=input_df_full, scatter_kws={'s': 20}, line_kws={'color': 'red', 'linestyle': '--'})
+sns.set(font_scale=1.5)
+plt.title('Emission Rate vs Overall Area')
+plt.xlabel('Area ($m^2$)')
+plt.ylabel('Emission Rate (kg/h)')
+plt.show()
+
+
+plt.figure(figsize=(5.5,4))
+#plt.scatter('PenArea (m2)', 'NH3 (kg/h)', data=input_df_full)
+sns.regplot(x='PenArea (m2)', y='NH3 (kg/h)', data=input_df_full, scatter_kws={'s': 20}, line_kws={'color': 'red', 'linestyle': '--'})
+sns.set(font_scale=1.5)
+plt.title('Emission Rate vs Pen Area')
+plt.xlabel('Area ($m^2$)')
+plt.ylabel('Emission Rate (kg/h)')
+plt.show()
+'''
 
 '''
 import umap
-import matplotlib.pyplot as plt
+
 labels = pd.concat([input_df_bands.iloc[:, 0], 'subset', input_df_bands.iloc[:, 0]], axis=0)  # First column for color
 labels['dataset'] = ['subset'] * 22 + ['average'] * 22
 data = input_df_bands.iloc[:, 1:]  # Rest of the columns for UMAP
@@ -128,8 +155,31 @@ plt.ylabel('UMAP 2')
 plt.show()
 '''
 
+'''
+# Calculate R2 and MSE avg values for SLR for an apples to apples comparison
+rows = []
+for x in range(0, 10000, 1):
+    r2, mae = linReg(input_df_full[['NH3 (kg/h)', 'OverallArea (m2)']], 'NH3 (kg/h)')
+    rows.append({'Index': x,
+                 'R2': r2,
+                 'MAE':mae})
+        
 
+# Graph box plot of accuracy for multiple iterations of SLR
+df = pd.DataFrame(rows)
+plt.figure(figsize=(5.5, 4))
+sns.set(font_scale=1.5)
+sns.boxplot(y='R2', data=df)
+plt.title('Linear Regression Model Performance, Average of 100 Iterations')
+plt.xlabel('Model, Input data')
+plt.ylabel('Accuracy ($R^2$)')
+plt.ylim(bottom=-2, top=1)
+plt.xticks(rotation=90)
+plt.show()
 
+print(df['R2'].median(axis=0))
+print(df['MAE'].median(axis=0))
+'''
 
 
 ### Decent figures
@@ -139,4 +189,5 @@ plt.show()
 #imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=500, importance_tt_level=0.3)
 #graphFeatureImportance(imp_df)
 
-
+#graphRFEst('NH3 (kg/h)', 1, 100, 1, input_df_full, n_runs=1000)
+#graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
