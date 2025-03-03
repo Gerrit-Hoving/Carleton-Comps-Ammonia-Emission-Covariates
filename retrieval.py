@@ -192,21 +192,32 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     plt.show()
 
 
-    in_plume = df.loc[df['ID'] == 0].copy()
-    out_plume = df.loc[df['ID'] == 1].copy()
-    far_1 = df.loc[df['ID'] == 2].copy()
-    far_2 = df.loc[df['ID'] == 3].copy()
-    out_plume['band_ratio'] = (in_plume.loc[0, 'radiance']/out_plume['radiance'])
+    in_plume = point_df.loc[point_df['ID'] == 0].copy().reset_index(drop=True)
+    out_plume = point_df.loc[point_df['ID'] == 1].copy().reset_index(drop=True)
+    far = point_df.loc[point_df['ID'] == 2].copy().reset_index(drop=True)
+    far_2 = point_df.loc[point_df['ID'] == 3].copy().reset_index(drop=True)
+    out_plume['band_ratio'] = (in_plume['radiance']/out_plume['radiance'])
+    far['band_ratio'] = (far_2['radiance']/far['radiance'])
 
     out_plume = out_plume.drop(out_plume[out_plume.band_ratio > 200].index)
 
 
-    # Plot band ratio and absorbtion spectra on same graph
+    ### Band ratio + absorbtion spectra @ 2200 nm
     fig, ax1 = plt.subplots(figsize=(6.5, 4))
     ax2 = ax1.twinx()
     
     sns.lineplot(
         data=out_plume,
+        x='wavelengths',
+        y='band_ratio',
+        hue='ID',  
+        palette='Dark2',  
+        marker='o',
+        ax = ax1
+    )
+    
+    sns.lineplot(
+        data=far,
         x='wavelengths',
         y='band_ratio',
         hue='ID',  
@@ -223,21 +234,57 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         ax = ax2
     )
     
-    # 1640nm Absorbtion
-    #plt.xlim(1600, 1700)
-    # 2200-2400nm Absorbtions
+
     plt.xlim(2280, 2360)
-    plt.xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
+    ax1.set_ylim(4.3, 5.5)
+    #ax2.set_ylim(0, 2e-21)
+    
+    ax1.set_xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
     ax1.set_ylabel('In Plume/Out of Plume Ratio', fontsize=12, family='Times New Roman')
     ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)', fontsize=12, family='Times New Roman')
-    ax1.set_ylim(35, 75)
-    #ax2.set_ylim(0, 2e-21)
     
     plt.xticks(fontsize=12, family='Times New Roman')
     plt.yticks(fontsize=12, family='Times New Roman')
 
     plt.show()
 
+
+    ### Band ratio + absorbtion spectra @ 1640 nm
+    fig, ax1 = plt.subplots(figsize=(6.5, 4))
+    ax2 = ax1.twinx()
+    
+    plt.xticks(fontsize=12, family='Times New Roman')
+    plt.yticks(fontsize=12, family='Times New Roman')
+     
+    sns.lineplot(
+         data=out_plume,
+         x='wavelengths',
+         y='band_ratio',
+         hue='ID',  
+         palette='Dark2',  
+         marker='o',
+         ax = ax1
+     )
+     
+    sns.lineplot(
+         data=ac_df,
+         x='wavelengths',
+         y='coefficients',
+         marker='o',  
+         ax = ax2
+     )
+     
+    #plt.xlim(1600, 1700)
+    #ax1.set_ylim(2.4, 2.6)
+    #ax2.set_ylim(0, 2e-21)
+    
+    ax1.set_xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
+    ax1.set_ylabel('In Plume/Out of Plume Ratio', fontsize=12, family='Times New Roman')
+    ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)', fontsize=12, family='Times New Roman')
+    
+    
+
+    plt.show()
 
 
 
@@ -261,6 +308,10 @@ rad = emit_xarray(raster_path, ortho=True)
 #points = pd.DataFrame([{"ID": 0, "latitude": 36.062170, "longitude": -119.378442}, {"ID": 1, "latitude": 36.061509, "longitude": -119.378456}])
 #feedlot-off feedlot edge - P2
 points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}])
+
+# P2 + far points pred high
+points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
+
 
 
 
