@@ -61,7 +61,12 @@ def calcSpectrum(bands, do_fetch=False, use_bands=True):
 
     nu_nm = 1e7 / nu
 
+    plt.figure(figsize=(6.5, 4))
     plt.plot(nu_nm,coef)
+    plt.xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
+    plt.ylabel('Absorbtion (cm$^{-1}$)', fontsize=12, family='Times New Roman')
+    plt.xticks(fontsize=12, family='Times New Roman')
+    plt.yticks(fontsize=12, family='Times New Roman')
     plt.show()
     
     # Return wavenumber, wavelength, coefficents
@@ -165,7 +170,7 @@ def matchedFilter(rasterFile, nu, coef, save=False):
 
 def inOutPlumeGraph(point_df, ac_df, raster_path):
     # Plot using seaborn
-    plt.figure(figsize=(8, 6))  # Equivalent to frame_height=400, frame_width=600
+    plt.figure(figsize=(6.5, 4))
 
     # Create the line plot with seaborn
     sns.lineplot(
@@ -189,13 +194,15 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
 
     in_plume = df.loc[df['ID'] == 0].copy()
     out_plume = df.loc[df['ID'] == 1].copy()
+    far_1 = df.loc[df['ID'] == 2].copy()
+    far_2 = df.loc[df['ID'] == 3].copy()
     out_plume['band_ratio'] = (in_plume.loc[0, 'radiance']/out_plume['radiance'])
 
     out_plume = out_plume.drop(out_plume[out_plume.band_ratio > 200].index)
 
 
     # Plot band ratio and absorbtion spectra on same graph
-    fig, ax1 = plt.subplots(figsize=(8, 6))
+    fig, ax1 = plt.subplots(figsize=(6.5, 4))
     ax2 = ax1.twinx()
     
     sns.lineplot(
@@ -215,18 +222,19 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         marker='o',  
         ax = ax2
     )
-
-    # Add titles and labels
-    plt.title('In Plume/Out of Plume Ratio')
-    plt.xlabel('Wavelength (nm)')
+    
     # 1640nm Absorbtion
     #plt.xlim(1600, 1700)
     # 2200-2400nm Absorbtions
     plt.xlim(2280, 2360)
-    ax1.set_ylabel('In Plume/Out of Plume Ratio')
-    ax2.set_ylabel('Simulated NH3 Spectrum')
+    plt.xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
+    ax1.set_ylabel('In Plume/Out of Plume Ratio', fontsize=12, family='Times New Roman')
+    ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)', fontsize=12, family='Times New Roman')
     ax1.set_ylim(35, 75)
     #ax2.set_ylim(0, 2e-21)
+    
+    plt.xticks(fontsize=12, family='Times New Roman')
+    plt.yticks(fontsize=12, family='Times New Roman')
 
     plt.show()
 
@@ -276,4 +284,4 @@ raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1
 
 #matchedFilter(raster_file, nu, coef, save = True)
 
-#inOutPlumeGraph(df, ac_df, raster_path)
+inOutPlumeGraph(df, ac_df, raster_path)
