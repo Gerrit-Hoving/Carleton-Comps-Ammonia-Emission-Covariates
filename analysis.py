@@ -297,7 +297,7 @@ def findParams(target, checkModel, df = None):
     print("Best Parameters:", grid_search.best_params_)
     print("Best Score:", grid_search.best_score_)
 
-def graphRFEst(target, start, stop, step=1, df=None, n_runs=1):
+def graphRFEst(target, start, stop, step=1, df=None, n_runs=1, save_as="Fig9a"):
     r2s = []
     for n_estimators in range(start, stop, step):
         r2_values = []
@@ -312,13 +312,13 @@ def graphRFEst(target, start, stop, step=1, df=None, n_runs=1):
         
     plt.figure(figsize=(3, 3))
     plt.scatter(range(start, stop, step), r2s)
-    plt.title('Random Forest', fontsize=12, family='Times New Roman')    
-    plt.xlabel('n_estimators', fontsize=12, family='Times New Roman')      
-    plt.ylabel('R2', fontsize=12, family='Times New Roman')    
-    plt.xticks(fontsize=12, family='Times New Roman')
-    plt.yticks(fontsize=12, family='Times New Roman')
+    plt.title('Random Forest')    
+    plt.xlabel('n_estimators')      
+    plt.ylabel('Accuracy (R^2)')   
+    plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
+    plt.show()
     
-def graphPLSRComp(df, target, start, stop, step=1, n_runs=1):
+def graphPLSRComp(df, target, start, stop, step=1, n_runs=1, save_as="Fig9b"):
     r2s = []
     for n_components in range(start, stop, step):
         r2_values = []
@@ -333,13 +333,12 @@ def graphPLSRComp(df, target, start, stop, step=1, n_runs=1):
         r2s.append(avg_r2)
        
     plt.figure(figsize=(3, 3))
-    plt.rcParams.update({'font.size': 12})
     plt.scatter(range(start, stop, step), r2s)
-    plt.title('PLSR', fontsize=12, family='Times New Roman')    
-    plt.xlabel('n_components', fontsize=12, family='Times New Roman')
-    plt.ylabel('R2', fontsize=12, family='Times New Roman') 
-    plt.xticks(fontsize=12, family='Times New Roman')
-    plt.yticks(fontsize=12, family='Times New Roman')
+    plt.title('PLSR')    
+    plt.xlabel('n_components')
+    plt.ylabel('Accuracy (R^2)') 
+    plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
+    plt.show()
      
 def graphRFClass(target, start, stop, step=1):
     r2s = []
@@ -518,7 +517,7 @@ def graphRFClassStability(target = 'HyTES_NH3_Detect', n_estimators = 60, df=Non
     plt.tight_layout()
     plt.show()
     
-def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iterations = 100, importance_tt_level=None):
+def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iterations = 100, importance_tt_level=None, save_as="Fig8"):
     rows= []
     #testValues = [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5]
     testValues = [0.1, 0.2, 0.3, 0.5, 0.8]
@@ -546,6 +545,7 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     plt.xlabel('Proportion of Data Reserved for Testing')
     plt.ylabel('Accuracy (R^2)')
     plt.ylim(bottom=-2, top=1)
+    plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
     plt.show()
     
     if importance_tt_level is not None:
@@ -575,7 +575,7 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
         
         return stats_df
     
-def graphFeatureImportance(imp_df):
+def graphFeatureImportance(imp_df, save_as = "Fig12"):
     bands_df = imp_df[imp_df['Feature'].str.contains('band', case=False)]
     #other_df = imp_df[~imp_df['Feature'].str.contains('band', case=False)]   
 
@@ -611,6 +611,7 @@ def graphFeatureImportance(imp_df):
     plt.legend()
     
     plt.tight_layout()
+    plt.savefig("../figures/" + save_as + "a.png",bbox_inches='tight',dpi=300)
     plt.show()
     
     # Plot Bar Chart for Top n Values
@@ -618,10 +619,10 @@ def graphFeatureImportance(imp_df):
     
     sns.barplot(x='Mean', y='Feature', data=top_df, palette='viridis')
     plt.xlabel('% Importance')
-
+    plt.savefig("../figures/" + save_as + "b.png", bbox_inches='tight', dpi=300)
     plt.show()
     
-def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensionality = 'reduced'):
+def graphCompareModels(target='NH3 (kg/h)', df=None, iterations=100, dimensionality='reduced', save_as=["Fig10", "Fig11"]):
     rows= []
     dfs = {}
     #testValues = [0.2, 0.3, 0.5]
@@ -667,6 +668,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
     #plt.xticks(rotation=90)
     plt.axhline(y=0, color='red', linestyle='--', linewidth=1)
     plt.axhline(y=0.63, color='blue', linestyle='--', linewidth=1)
+    plt.savefig("../figures/" + save_as[0] + ".png", bbox_inches='tight', dpi=300)
     plt.show()
     
     plt.figure(figsize=(6.5, 4))
@@ -677,9 +679,10 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
     plt.ylim(bottom=0)
     #plt.xticks(rotation=90)
     plt.axhline(y=23.6, color='blue', linestyle='--', linewidth=1)
+    plt.savefig("../figures/" + save_as[1] + ".png", bbox_inches='tight', dpi=300)
     plt.show()
         
-def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100, model = 'RF'):
+def graphModelPredictions(target='NH3 (kg/h)', df=None, iterations = 100, model = 'RF', save_as="Fig13"):
     rows = []
     test = 0.25
     
@@ -716,5 +719,6 @@ def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100, mode
     plt.plot([0, 200], [0, 200], color='red', linestyle='--', label='1:1 line')
     # Add regression line
     sns.regplot(x='Test', y='Predicted', scatter=False, color='blue', label='Linear regression line', data=df)
+    plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
     plt.show()
 
