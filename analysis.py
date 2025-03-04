@@ -16,11 +16,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
 
-from matplotlib import rcParams
-rcParams['font.family'] = 'Times New Roman'
-rcParams['font.size'] = 12  
-
-
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.cross_decomposition import PLSRegression
@@ -34,8 +29,13 @@ from sklearn.model_selection import GridSearchCV
 
 from extractions import pullData
 
-
 EMIT_BAND_META_PATH = r'D:\Documents\Projects\comps\data\EMIT\band_metadata.csv'
+
+from matplotlib import rcParams
+rcParams['font.family'] = 'Times New Roman'
+rcParams['font.size'] = 12  
+
+sns.set_theme(style="ticks")
 
 
 def randomForestReg(target, estimators, df = None, details=False, returnPredictions=False, testSize=0.2):
@@ -174,7 +174,6 @@ def linReg(df, target):
     mae = mean_absolute_error(y_test, y_pred)
     
     return r2, mae
-
 
 def randomForestClass(target, estimators, df=None, details=False, testSize=0.2):
     if df is None:
@@ -544,10 +543,8 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     plt.figure(figsize=(6.5, 4))
     sns.boxplot(x='Category', y='R2', data=df)
     #plt.title('Random Forest Model Performance')
-    plt.xlabel('Proportion of Data Reserved for Testing', fontsize=12, family='Times New Roman')
-    plt.ylabel('Accuracy ($R^2$)', fontsize=12, family='Times New Roman')
-    plt.xticks(fontsize=12, family='Times New Roman')
-    plt.yticks(fontsize=12, family='Times New Roman')
+    plt.xlabel('Proportion of Data Reserved for Testing')
+    plt.ylabel('Accuracy (R^2)')
     plt.ylim(bottom=-2, top=1)
     plt.show()
     
@@ -592,41 +589,35 @@ def graphFeatureImportance(imp_df):
     bands_df = bands_df.fillna(0)
     
     # Plot line chart of importance over wavelength
-    plt.figure(figsize=(10, 8))
-    sns.set(font_scale=1.5)
+    plt.figure(figsize=(6.5, 4))
     
     sns.lineplot(data=bands_df, x='wavelengths', y='Mean', label='Mean', marker='o', color='b')
     plt.fill_between(bands_df['wavelengths'], bands_df['Mean'] - bands_df['Std Dev'], bands_df['Mean'] + bands_df['Std Dev'], color='b', alpha=0.2, label='±1 Std Dev')
     
     # Add smoothed line (LOWESS)
     lowess = sm.nonparametric.lowess
-    print(bands_df.index)
+    #print(bands_df.index)
     smooth = lowess(bands_df['Mean'], bands_df['wavelengths'], frac=0.05)
     plt.plot(bands_df['wavelengths'], smooth[:, 1], color='red', label='Smoothed')
     
-    plt.title('Importance vs Band Name')
-    #plt.xticks(ticks=[0, len(bands_df)-1], labels=['380', '2500'])
-    plt.xlabel('Wavelength (nm)')
-    
-    # Set the minimum y-axis value to 0
-    plt.ylim(bottom=0)
+    # Set the y-axis to 0-4%
+    plt.ylim(0, 4)
     plt.gca().yaxis.set_major_formatter(ticker.PercentFormatter())
     
     # Add plot title and labels
-    plt.title('Mean Importance and ±1 Standard Deviation')
-    plt.xlabel('Wavelength')
+    #plt.title('Mean Importance and ±1 Standard Deviation')
+    plt.xlabel('Wavelength (nm)')
     plt.ylabel('Average Importance, 100 models')
     plt.legend()
     
     plt.tight_layout()
     plt.show()
     
-    
     # Plot Bar Chart for Top n Values
     top_df = imp_df.nlargest(6, 'Mean')
-
+    
     sns.barplot(x='Mean', y='Feature', data=top_df, palette='viridis')
-    plt.title('Top 6 Importance Values')
+    plt.xlabel('% Importance')
 
     plt.show()
     
@@ -648,7 +639,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
         for x in range(0, iterations, 1):
             r2, mae, mape, importance = randomForestReg(target, 150, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
-                     'Category': 'RFR, ' + df,
+                     'Category': 'RFR,\n' + df,
                      'R2': r2, 
                      'MAE': mae,
                      'MAPE': mape,
@@ -658,7 +649,7 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
         for x in range(0, iterations, 1):
             r2, mae, mape = partialLeastSquaresReg(target, 5, dfs.get(df), False, testSize=test)
             rows.append({'Index': x,
-                     'Category': 'PLSR, ' + df,
+                     'Category': 'PLSR,\n' + df,
                      'R2': r2, 
                      'MAE': mae,
                      'MAPE': mape,
@@ -667,26 +658,24 @@ def graphCompareModels(target = 'NH3 (kg/h)', df=None, iterations = 100, dimensi
 
     # Graph box plot of accuracy at different test values
     df = pd.DataFrame(rows)
-    plt.figure(figsize=(5.5, 4))
-    sns.set(font_scale=1.5)
+    plt.figure(figsize=(6.5, 4))
     sns.boxplot(x='Category', y='R2', data=df)
-    plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
+    #plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
     plt.xlabel('Model, Input data')
-    plt.ylabel('Accuracy ($R^2$)')
+    plt.ylabel('Accuracy (R^2)')
     plt.ylim(bottom=-2, top=1)
-    plt.xticks(rotation=90)
+    #plt.xticks(rotation=90)
     plt.axhline(y=0, color='red', linestyle='--', linewidth=1)
     plt.axhline(y=0.63, color='blue', linestyle='--', linewidth=1)
     plt.show()
     
-    plt.figure(figsize=(5.5, 4))
-    sns.set(font_scale=1.5)
+    plt.figure(figsize=(6.5, 4))
     sns.boxplot(x='Category', y='MAE', data=df)
-    plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
+    #plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
     plt.xlabel('Model, Input data')
     plt.ylabel('Accuracy (MAE)')
     plt.ylim(bottom=0)
-    plt.xticks(rotation=90)
+    #plt.xticks(rotation=90)
     plt.axhline(y=23.6, color='blue', linestyle='--', linewidth=1)
     plt.show()
         
@@ -716,12 +705,11 @@ def graphModelPredictions(target = 'NH3 (kg/h)', df=None, iterations = 100, mode
             
     df = pd.DataFrame(rows)
 
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(6.5, 5))
     sns.scatterplot(x='Test', y='Predicted', data=df)
-    sns.set(font_scale=2.5)
     plt.xlim(left=0, right=200)
     plt.ylim(bottom=0, top=200)
-    plt.title(model + ' Regression Model Predictions')
+    #plt.title(model + ' Regression Model Predictions')
     plt.xlabel('Test')
     plt.ylabel('Predicted')
     # Add 1-1 Line
