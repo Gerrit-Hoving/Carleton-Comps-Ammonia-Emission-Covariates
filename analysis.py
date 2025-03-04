@@ -15,7 +15,11 @@ import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
-import re
+
+from matplotlib import rcParams
+rcParams['font.family'] = 'Times New Roman'
+rcParams['font.size'] = 12  
+
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor

@@ -67,10 +67,8 @@ def calcSpectrum(bands, do_fetch=False, use_bands=True):
 
     plt.figure(figsize=(6.5, 4))
     plt.plot(nu_nm,coef)
-    plt.xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
-    plt.ylabel('Absorbtion (cm$^{-1}$)', fontsize=12, family='Times New Roman')
-    plt.xticks(fontsize=12, family='Times New Roman')
-    plt.yticks(fontsize=12, family='Times New Roman')
+    plt.xlabel('Wavelength (nm)')
+    plt.ylabel('Absorbtion (cm$^{-1}$)')
     plt.show()
     
     # Return wavenumber, wavelength, coefficents
@@ -245,13 +243,10 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     ax1.set_ylim(1.32,1.41)
     #ax2.set_ylim(0, 2e-21)
     
-    ax1.set_xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
-    ax1.set_ylabel('In Plume/Out of Plume Ratio', fontsize=12, family='Times New Roman')
-    ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)', fontsize=12, family='Times New Roman')
+    ax1.set_xlabel('Wavelength (nm)')
+    ax1.set_ylabel('In Plume/Out of Plume Ratio')
+    ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
     
-    plt.xticks(fontsize=12, family='Times New Roman')
-    plt.yticks(fontsize=12, family='Times New Roman')
-
     plt.show()
 
 
@@ -259,9 +254,6 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     fig, ax1 = plt.subplots(figsize=(6.5, 4))
     ax2 = ax1.twinx()
     
-    plt.xticks(fontsize=12, family='Times New Roman')
-    plt.yticks(fontsize=12, family='Times New Roman')
-     
     sns.lineplot(
          data=out_plume,
          x='wavelengths',
@@ -302,8 +294,8 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     ax1.set_ylabel('In Plume/Out of Plume Ratio')
     ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
     
-    ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.95, 0.9))
-    ax2.legend(loc='upper right', frameon=False, prop={'family': 'Times New Roman', 'size': 12})
+    ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.945, 0.92))
+    ax2.legend(loc='upper right', frameon=False)
 
     plt.show()
 

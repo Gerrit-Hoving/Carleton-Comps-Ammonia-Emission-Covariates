@@ -12,12 +12,17 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from matplotlib import rcParams
+rcParams['font.family'] = 'Times New Roman'
+rcParams['font.size'] = 12  
+
 from analysis import randomForestReg, partialLeastSquaresReg, linReg
 from analysis import graphRFRegStability, graphCompareModels, graphModelPredictions
 from analysis import graphRFEst, graphFeatureImportance
 from analysis import graphPLSRComp
 
 from extractions import pullData
+
 
 
 
@@ -170,10 +175,8 @@ print(df['MAE'].median(axis=0))
 plt.figure(figsize=(6.5,4))
 #plt.scatter('OverallArea (m2)', 'NH3 (kg/h)', data=input_df_full)
 sns.regplot(x='OverallArea (m2)', y='NH3 (kg/h)', data=input_df_full, scatter_kws={'s': 20}, line_kws={'color': 'red', 'linestyle': '--'})
-plt.xlabel('Area ($m^2$)', fontsize=12, family='Times New Roman')
-plt.ylabel('Emission Rate (kg/h)', fontsize=12, family='Times New Roman')
-plt.xticks(fontsize=12, family='Times New Roman')
-plt.yticks(fontsize=12, family='Times New Roman')
+plt.xlabel('Area ($m^2$)')
+plt.ylabel('Emission Rate (kg/h)')
 plt.show()
 
 # Fig 8
