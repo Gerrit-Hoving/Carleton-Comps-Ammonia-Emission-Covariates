@@ -309,9 +309,11 @@ def graphRFEst(target, start, stop, step=1, df=None, n_runs=1):
         
     plt.figure(figsize=(3, 3))
     plt.scatter(range(start, stop, step), r2s)
-    plt.title('Random Forest')    
-    plt.xlabel('n_estimators')      
-    plt.ylabel('R2')    
+    plt.title('Random Forest', fontsize=12, family='Times New Roman')    
+    plt.xlabel('n_estimators', fontsize=12, family='Times New Roman')      
+    plt.ylabel('R2', fontsize=12, family='Times New Roman')    
+    plt.xticks(fontsize=12, family='Times New Roman')
+    plt.yticks(fontsize=12, family='Times New Roman')
     
 def graphPLSRComp(df, target, start, stop, step=1, n_runs=1):
     r2s = []
@@ -330,9 +332,11 @@ def graphPLSRComp(df, target, start, stop, step=1, n_runs=1):
     plt.figure(figsize=(3, 3))
     plt.rcParams.update({'font.size': 12})
     plt.scatter(range(start, stop, step), r2s)
-    plt.title('PLSR')    
-    plt.xlabel('n_components')
-    plt.ylabel('R2') 
+    plt.title('PLSR', fontsize=12, family='Times New Roman')    
+    plt.xlabel('n_components', fontsize=12, family='Times New Roman')
+    plt.ylabel('R2', fontsize=12, family='Times New Roman') 
+    plt.xticks(fontsize=12, family='Times New Roman')
+    plt.yticks(fontsize=12, family='Times New Roman')
      
 def graphRFClass(target, start, stop, step=1):
     r2s = []
@@ -533,12 +537,13 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     # Graph box plot of accuracy at different test values
     df = pd.DataFrame(rows)
     plt.figure()
-    plt.figure(figsize=(10, 8))
-    sns.set(font_scale=2.5)
+    plt.figure(figsize=(6.5, 4))
     sns.boxplot(x='Category', y='R2', data=df)
-    plt.title('Random Forest Model Performance')
-    plt.xlabel('Proportion of Data Reserved for Testing')
-    plt.ylabel('Accuracy ($R^2$)')
+    #plt.title('Random Forest Model Performance')
+    plt.xlabel('Proportion of Data Reserved for Testing', fontsize=12, family='Times New Roman')
+    plt.ylabel('Accuracy ($R^2$)', fontsize=12, family='Times New Roman')
+    plt.xticks(fontsize=12, family='Times New Roman')
+    plt.yticks(fontsize=12, family='Times New Roman')
     plt.ylim(bottom=-2, top=1)
     plt.show()
     
