@@ -209,43 +209,48 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     ax2 = ax1.twinx()
     
     sns.lineplot(
-        data=out_plume,
-        x='wavelengths',
-        y='band_ratio',
-        hue='ID',  
-        palette='Dark2',  
-        marker='o',
-        ax = ax1
-    )
+         data=out_plume,
+         x='wavelengths',
+         y='band_ratio',
+         color='#1f77b4',  
+         label='Ammonia Plume',    
+         marker='o',
+         ax = ax1
+     )
     
-    far['band_ratio_s'] = far['band_ratio'] + 0.32
+    far['band_ratio_s'] = far['band_ratio'] + 0.33
     
     sns.lineplot(
         data=far,
         x='wavelengths',
         y='band_ratio_s',
-        hue='ID',  
-        palette='Dark2',  
+        color='#ff7f0e',  
+        label='No ammonia',  
         marker='o',
         ax = ax1
     )
-    
+     
     sns.lineplot(
         data=ac_df,
         x='wavelengths',
         y='coefficients',
         marker='o',  
+        color='#2ca02c',  
+        label='Simulated absorbtion',  
         ax = ax2
-    )
+     )
     
 
     plt.xlim(2280, 2360)
-    ax1.set_ylim(1.32,1.41)
+    ax1.set_ylim(1.33, 1.42)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
     ax1.set_ylabel('In Plume/Out of Plume Ratio')
     ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
+    
+    ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.945, 0.92))
+    ax2.legend(loc='upper right', frameon=False)
     
     plt.show()
 
@@ -277,13 +282,13 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     )
      
     sns.lineplot(
-         data=ac_df,
-         x='wavelengths',
-         y='coefficients',
-         marker='o',  
-         color='#2ca02c',  
-         label='Simulated absorbtion',  
-         ax = ax2
+        data=ac_df,
+        x='wavelengths',
+        y='coefficients',
+        marker='o',  
+        color='#2ca02c',  
+        label='Simulated absorbtion',  
+        ax = ax2
      )
      
     plt.xlim(1600, 1700)
