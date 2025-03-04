@@ -104,24 +104,6 @@ comparison_dfs = {'all':input_df_full, 'bands':input_df_bands, 'random':input_df
 #graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=500)
 
 
-plt.figure(figsize=(6.5,4))
-#plt.scatter('OverallArea (m2)', 'NH3 (kg/h)', data=input_df_full)
-sns.regplot(x='OverallArea (m2)', y='NH3 (kg/h)', data=input_df_full, scatter_kws={'s': 20}, line_kws={'color': 'red', 'linestyle': '--'})
-sns.set(font_scale=1.5)
-plt.title('Emission Rate vs Overall Area')
-plt.xlabel('Area ($m^2$)')
-plt.ylabel('Emission Rate (kg/h)')
-plt.show()
-
-
-plt.figure(figsize=(6.5,4))
-#plt.scatter('PenArea (m2)', 'NH3 (kg/h)', data=input_df_full)
-sns.regplot(x='PenArea (m2)', y='NH3 (kg/h)', data=input_df_full, scatter_kws={'s': 20}, line_kws={'color': 'red', 'linestyle': '--'})
-sns.set(font_scale=1.5)
-plt.title('Emission Rate vs Pen Area')
-plt.xlabel('Area ($m^2$)')
-plt.ylabel('Emission Rate (kg/h)')
-plt.show()
 
 
 '''
@@ -182,12 +164,33 @@ print(df['MAE'].median(axis=0))
 '''
 
 
-### Decent figures
+### Final figures
+
+# Fig 7
+plt.figure(figsize=(6.5,4))
+#plt.scatter('OverallArea (m2)', 'NH3 (kg/h)', data=input_df_full)
+sns.regplot(x='OverallArea (m2)', y='NH3 (kg/h)', data=input_df_full, scatter_kws={'s': 20}, line_kws={'color': 'red', 'linestyle': '--'})
+plt.xlabel('Area ($m^2$)', fontsize=12, family='Times New Roman')
+plt.ylabel('Emission Rate (kg/h)', fontsize=12, family='Times New Roman')
+plt.xticks(fontsize=12, family='Times New Roman')
+plt.yticks(fontsize=12, family='Times New Roman')
+plt.show()
+
+# Fig 8
+imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=500, importance_tt_level=0.3)
+
+# Fig 9
+graphRFEst('NH3 (kg/h)', 1, 100, 1, input_df_full, n_runs=1000)
+graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
+
+
+
+
+
 #comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
 #graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=200)
 
 imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=500, importance_tt_level=0.3)
 graphFeatureImportance(imp_df)
 
-#graphRFEst('NH3 (kg/h)', 1, 100, 1, input_df_full, n_runs=1000)
-#graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000)
+
