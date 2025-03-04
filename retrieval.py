@@ -15,6 +15,10 @@ from emit_tools import emit_xarray
 import rasterio
 from scipy.linalg import inv
 
+from matplotlib import rcParams
+rcParams['font.family'] = 'Times New Roman'
+rcParams['font.size'] = 12  
+
 
 
 
@@ -179,7 +183,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         y='radiance',
         hue='ID',  # Group data by 'ID'
         palette='Dark2',  # Use Dark2 color palette
-        marker='o'  # Optional: add markers to lines
+        marker=''  # Optional: add markers to lines
     )
 
 
@@ -216,10 +220,12 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         ax = ax1
     )
     
+    far['band_ratio_s'] = far['band_ratio'] + 0.32
+    
     sns.lineplot(
         data=far,
         x='wavelengths',
-        y='band_ratio',
+        y='band_ratio_s',
         hue='ID',  
         palette='Dark2',  
         marker='o',
@@ -236,7 +242,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     
 
     plt.xlim(2280, 2360)
-    ax1.set_ylim(4.3, 5.5)
+    ax1.set_ylim(1.32,1.41)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
@@ -260,29 +266,44 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          data=out_plume,
          x='wavelengths',
          y='band_ratio',
-         hue='ID',  
-         palette='Dark2',  
+         color='#1f77b4',  
+         label='Ammonia Plume',    
          marker='o',
          ax = ax1
      )
+    
+    far['band_ratio_s'] = far['band_ratio'] + 0.1
+    
+    sns.lineplot(
+        data=far,
+        x='wavelengths',
+        y='band_ratio_s',
+        color='#ff7f0e',  
+        label='No ammonia',  
+        marker='o',
+        ax = ax1
+    )
      
     sns.lineplot(
          data=ac_df,
          x='wavelengths',
          y='coefficients',
          marker='o',  
+         color='#2ca02c',  
+         label='Simulated absorbtion',  
          ax = ax2
      )
      
-    #plt.xlim(1600, 1700)
-    #ax1.set_ylim(2.4, 2.6)
+    plt.xlim(1600, 1700)
+    ax1.set_ylim(1.16, 1.22)
     #ax2.set_ylim(0, 2e-21)
     
-    ax1.set_xlabel('Wavelength (nm)', fontsize=12, family='Times New Roman')
-    ax1.set_ylabel('In Plume/Out of Plume Ratio', fontsize=12, family='Times New Roman')
-    ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)', fontsize=12, family='Times New Roman')
+    ax1.set_xlabel('Wavelength (nm)')
+    ax1.set_ylabel('In Plume/Out of Plume Ratio')
+    ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
     
-    
+    ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.95, 0.9))
+    ax2.legend(loc='upper right', frameon=False, prop={'family': 'Times New Roman', 'size': 12})
 
     plt.show()
 
@@ -307,12 +328,13 @@ rad = emit_xarray(raster_path, ortho=True)
 #pond-feedlot diff - P1
 #points = pd.DataFrame([{"ID": 0, "latitude": 36.062170, "longitude": -119.378442}, {"ID": 1, "latitude": 36.061509, "longitude": -119.378456}])
 #feedlot-off feedlot edge - P2
-points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}])
+#points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}])
 
 # P2 + far points pred high
-points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
+#points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
 
-
+# Points in same field with different concentrations
+points = pd.DataFrame([{"ID": 0, "latitude": 36.114725, "longitude": -119.285175}, {"ID": 1, "latitude": 36.114282, "longitude": -119.280355}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
 
 
 points = points.set_index(['ID'])
