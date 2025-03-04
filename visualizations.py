@@ -20,6 +20,7 @@ from analysis import randomForestReg, partialLeastSquaresReg, linReg
 from analysis import graphRFRegStability, graphCompareModels, graphModelPredictions
 from analysis import graphRFEst, graphFeatureImportance
 from analysis import graphPLSRComp
+from retrieval import generateRetrievalGraphs
 
 from extractions import pullData
 
@@ -197,4 +198,19 @@ graphFeatureImportance(imp_df)
 
 # Fig 13
 graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='RF') #100 iter
+
+# Fig 6, 15, 16
+generateRetrievalGraphs()
+
+
+## Appendix
+
+# Fig A1
+imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_bands, iterations=250, importance_tt_level=0.3, save_as="FigA1") #500 iter-100 enough?
+
+# Fig A2
+graphRFEst('NH3 (kg/h)', 1, 100, 1, input_df_bands, n_runs=1000, save_as="FigA2a") #1000 iter
+graphPLSRComp(input_df_bands, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000, save_as="FigA2b") #1000 iter
+
+
 

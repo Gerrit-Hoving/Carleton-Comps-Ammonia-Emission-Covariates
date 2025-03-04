@@ -305,53 +305,53 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     plt.show()
 
 
-
-### Load EMIT raster
-raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
-#raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004.nc'
-#raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003.nc'
-
-
-rad = emit_xarray(raster_path, ortho=True)
-
-
-# 0 is in plume
-#old model
-#points = pd.DataFrame([{"ID": 0, "latitude": 36.2286746, "longitude": -119.1756712}, {"ID": 1, "latitude": 36.2279773, "longitude": -119.1756845}])
-#new model
-#points = pd.DataFrame([{"ID": 0, "latitude": 36.224390, "longitude": -119.175144}, {"ID": 1, "latitude": 36.223793, "longitude": -119.176743}])
-#new model max concentration difference
-#points = pd.DataFrame([{"ID": 0, "latitude": 36.229778, "longitude": -119.161069}, {"ID": 1, "latitude": 36.234525, "longitude": -119.166433}])
-#pond-feedlot diff - P1
-#points = pd.DataFrame([{"ID": 0, "latitude": 36.062170, "longitude": -119.378442}, {"ID": 1, "latitude": 36.061509, "longitude": -119.378456}])
-#feedlot-off feedlot edge - P2
-#points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}])
-
-# P2 + far points pred high
-#points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
-
-# Points in same field with different concentrations
-points = pd.DataFrame([{"ID": 0, "latitude": 36.114725, "longitude": -119.285175}, {"ID": 1, "latitude": 36.114282, "longitude": -119.280355}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
-
-
-points = points.set_index(['ID'])
-
-point_ds = rad.sel(latitude=points.to_xarray().latitude, longitude=points.to_xarray().longitude, method='nearest')
-
-df = point_ds.to_dataframe().reset_index()
-
-emit_bands = df[df['ID'] == 0].copy()
-
-nu, nu_nm, coef = calcSpectrum(emit_bands)
-
-ac = {'wavelengths':nu_nm, 'coefficients':coef}
-
-ac_df = pd.DataFrame(ac)
-
-raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
-#raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004_radiance'  
-#raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003_radiance'  
-
-#matchedFilter(raster_file, nu, coef, save = True)
-
-inOutPlumeGraph(df, ac_df, raster_path)
+def generateRetrievalGraphs():
+    ### Load EMIT raster
+    raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006.nc'
+    #raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004.nc'
+    #raster_path = r'D:\Documents\Projects\comps\data\EMIT\raw\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003.nc'
+    
+    
+    rad = emit_xarray(raster_path, ortho=True)
+    
+    
+    # 0 is in plume
+    #old model
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.2286746, "longitude": -119.1756712}, {"ID": 1, "latitude": 36.2279773, "longitude": -119.1756845}])
+    #new model
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.224390, "longitude": -119.175144}, {"ID": 1, "latitude": 36.223793, "longitude": -119.176743}])
+    #new model max concentration difference
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.229778, "longitude": -119.161069}, {"ID": 1, "latitude": 36.234525, "longitude": -119.166433}])
+    #pond-feedlot diff - P1
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.062170, "longitude": -119.378442}, {"ID": 1, "latitude": 36.061509, "longitude": -119.378456}])
+    #feedlot-off feedlot edge - P2
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}])
+    
+    # P2 + far points pred high
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
+    
+    # Points in same field with different concentrations
+    points = pd.DataFrame([{"ID": 0, "latitude": 36.114725, "longitude": -119.285175}, {"ID": 1, "latitude": 36.114282, "longitude": -119.280355}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
+    
+    
+    points = points.set_index(['ID'])
+    
+    point_ds = rad.sel(latitude=points.to_xarray().latitude, longitude=points.to_xarray().longitude, method='nearest')
+    
+    df = point_ds.to_dataframe().reset_index()
+    
+    emit_bands = df[df['ID'] == 0].copy()
+    
+    nu, nu_nm, coef = calcSpectrum(emit_bands)
+    
+    ac = {'wavelengths':nu_nm, 'coefficients':coef}
+    
+    ac_df = pd.DataFrame(ac)
+    
+    raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230818T210107_2323014_006_radiance'  
+    #raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004_radiance'  
+    #raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003_radiance'  
+    
+    #matchedFilter(raster_file, nu, coef, save = True)
+    
+    inOutPlumeGraph(df, ac_df, raster_path)
