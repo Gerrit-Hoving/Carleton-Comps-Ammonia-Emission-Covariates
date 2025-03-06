@@ -194,21 +194,24 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     # Show the plot
     plt.show()
     
-    high_nh3 = point_df[point_df['ID'] == 0]['radiance'].reset_index(drop=True)
-    low_nh3 = point_df[point_df['ID'] == 2]['radiance'].reset_index(drop=True)
+    in_nh3 = point_df[point_df['ID'] == 0]['radiance'].reset_index(drop=True)
+    out_nh3 = point_df[point_df['ID'] == 1]['radiance'].reset_index(drop=True)
+    far_nh3 = point_df[point_df['ID'] == 2]['radiance'].reset_index(drop=True)
 
     # Combine the two filtered DataFrames into one with two columns
     df = pd.DataFrame({
-        'radiance_in': high_nh3,
-        'radiance_far': low_nh3
+        'radiance_in': in_nh3,
+        'radiance_out': out_nh3,
+        'radiance_far': far_nh3
     })
 
     # Apply vector normalization using sklearn's normalize function
-    df_normalized = pd.DataFrame(normalize(df, norm='l2', axis=0))
+    df_normalized = pd.DataFrame(normalize(df, norm='l2', axis=1))
     
-    df_normalized.columns = ['radiance_in', 'radiance_far']
+    df_normalized.columns = ['radiance_in', 'radiance_out', 'radiance_far']
     
     df_normalized['wavelengths'] = point_df[point_df['ID'] == 0]['wavelengths'].reset_index(drop=True)
+    df['wavelengths'] = point_df[point_df['ID'] == 0]['wavelengths'].reset_index(drop=True)
 
 
     in_plume = point_df.loc[point_df['ID'] == 0].copy().reset_index(drop=True)
@@ -226,21 +229,33 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     ax2 = ax1.twinx()
     
     sns.lineplot(
-         data=out_plume,
+         data=df,
          x='wavelengths',
-         y='radiance',
+         y='radiance_in',
          color='#1f77b4',  
          label='Ammonia plume',    
          marker='o',
          ax = ax1
      )
     
-    far['radiance_s'] = far['radiance'] + 0.3
+    df['radiance_out'] = df['radiance_out'] + 0.32
     
     sns.lineplot(
-        data=far,
+        data=df,
         x='wavelengths',
-        y='radiance_s',
+        y='radiance_out',
+        color='#9467bd',  
+        label='Outside plume',  
+        marker='o',
+        ax = ax1
+    )
+    
+    df['radiance_far'] = df['radiance_far'] + 0.3
+    
+    sns.lineplot(
+        data=df,
+        x='wavelengths',
+        y='radiance_far',
         color='#ff7f0e',  
         label='No ammonia',  
         marker='o',
@@ -259,11 +274,11 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     
 
     plt.xlim(2280, 2360)
-    ax1.set_ylim(0.24, 0.45)
+    ax1.set_ylim(0.22, 0.44)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
-    ax1.set_ylabel('In Plume/Out of Plume Ratio')
+    ax1.set_ylabel('Radiance (uW/nm/sr/cm2)')
     ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
     
     ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.945, 0.92))
@@ -286,7 +301,19 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          ax = ax1
      )
     
-    df_normalized['radiance_far'] = df_normalized['radiance_far'] + 0.02
+    df_normalized['radiance_out'] = df_normalized['radiance_out'] + 0.62
+    
+    sns.lineplot(
+        data=df_normalized,
+        x='wavelengths',
+        y='radiance_out',
+        color='#9467bd',  
+        label='Outside plume',  
+        marker='o',
+        ax = ax1
+    )
+    
+    df_normalized['radiance_far'] = df_normalized['radiance_far'] + 0.6
     
     sns.lineplot(
         data=df_normalized,
@@ -309,11 +336,11 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
      )
      
     plt.xlim(1600, 1700)
-    ax1.set_ylim(0.034, 0.045)
+    ax1.set_ylim(0.9, 0.92)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
-    ax1.set_ylabel('In Plume/Out of Plume Ratio')
+    ax1.set_ylabel('Normalized Radiance')
     ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
     
     ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.945, 0.92))
@@ -355,7 +382,10 @@ def generateRetrievalGraphs():
     #points = pd.DataFrame([{"ID": 0, "latitude": 36.115002, "longitude": -119.285173}, {"ID": 1, "latitude": 36.113654, "longitude": -119.280307}, {"ID": 2, "latitude": 36.0947921, "longitude": -118.7094658}, {"ID": 3, "latitude": 36.0946982, "longitude": -118.7086598}])
 
     # Emitting vs non-emitting lot surface
-    points = pd.DataFrame([{"ID": 0, "latitude": 36.110436, "longitude": -119.298685}, {"ID": 1, "latitude": 36.111565, "longitude": -119.295516}, {"ID": 2, "latitude": 36.0947921, "longitude": -118.7094658}, {"ID": 3, "latitude": 36.0946982, "longitude": -118.7086598}])
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.110436, "longitude": -119.298685}, {"ID": 1, "latitude": 36.111565, "longitude": -119.295516}, {"ID": 2, "latitude": 36.0947921, "longitude": -118.7094658}, {"ID": 3, "latitude": 36.0946982, "longitude": -118.7086598}])
+
+    
+    points = pd.DataFrame([{"ID": 0, "latitude": 36.110436, "longitude": -119.298685}, {"ID": 1, "latitude": 36.110399, "longitude": -119.291208}, {"ID": 2, "latitude": 36.0947921, "longitude": -118.7094658}, {"ID": 3, "latitude": 36.0946982, "longitude": -118.7086598}])
 
 
     points = points.set_index(['ID'])
