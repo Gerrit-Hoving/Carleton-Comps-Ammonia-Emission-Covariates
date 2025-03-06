@@ -192,6 +192,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
 
     # Show the plot
     plt.show()
+    
 
 
     in_plume = point_df.loc[point_df['ID'] == 0].copy().reset_index(drop=True)
@@ -211,19 +212,19 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     sns.lineplot(
          data=out_plume,
          x='wavelengths',
-         y='band_ratio',
+         y='radiance',
          color='#1f77b4',  
          label='Ammonia Plume',    
          marker='o',
          ax = ax1
      )
     
-    far['band_ratio_s'] = far['band_ratio'] + 0.1
+    far['radiance_s'] = far['radiance'] + 0.3
     
     sns.lineplot(
         data=far,
         x='wavelengths',
-        y='band_ratio_s',
+        y='radiance_s',
         color='#ff7f0e',  
         label='No ammonia',  
         marker='o',
@@ -242,7 +243,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     
 
     plt.xlim(2280, 2360)
-    ax1.set_ylim(0.9, 1)
+    ax1.set_ylim(0.24, 0.45)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
@@ -262,19 +263,19 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     sns.lineplot(
          data=out_plume,
          x='wavelengths',
-         y='band_ratio',
+         y='radiance',
          color='#1f77b4',  
          label='Ammonia Plume',    
          marker='o',
          ax = ax1
      )
     
-    far['band_ratio_s'] = far['band_ratio'] + 0.25
+    far['radiance_s'] = far['radiance'] + 1.5
     
     sns.lineplot(
         data=far,
         x='wavelengths',
-        y='band_ratio_s',
+        y='radiance_s',
         color='#ff7f0e',  
         label='No ammonia',  
         marker='o',
@@ -292,7 +293,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
      )
      
     plt.xlim(1600, 1700)
-    ax1.set_ylim(1.13, 1.18)
+    ax1.set_ylim(2.2, 3)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
