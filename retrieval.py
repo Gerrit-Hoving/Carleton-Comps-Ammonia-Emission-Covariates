@@ -176,7 +176,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
 
     # Create the line plot with seaborn
     sns.lineplot(
-        data=df,
+        data=point_df,
         x='wavelengths',
         y='radiance',
         hue='ID',  # Group data by 'ID'
@@ -218,7 +218,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          ax = ax1
      )
     
-    far['band_ratio_s'] = far['band_ratio'] + 0.33
+    far['band_ratio_s'] = far['band_ratio'] + 0.1
     
     sns.lineplot(
         data=far,
@@ -242,7 +242,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     
 
     plt.xlim(2280, 2360)
-    ax1.set_ylim(1.33, 1.42)
+    ax1.set_ylim(0.9, 1)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
@@ -269,7 +269,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          ax = ax1
      )
     
-    far['band_ratio_s'] = far['band_ratio'] + 0.1
+    far['band_ratio_s'] = far['band_ratio'] + 0.25
     
     sns.lineplot(
         data=far,
@@ -292,7 +292,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
      )
      
     plt.xlim(1600, 1700)
-    ax1.set_ylim(1.16, 1.22)
+    ax1.set_ylim(1.13, 1.18)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
@@ -330,16 +330,23 @@ def generateRetrievalGraphs():
     # P2 + far points pred high
     #points = pd.DataFrame([{"ID": 0, "latitude": 36.0529654, "longitude": -119.3969367}, {"ID": 1, "latitude": 36.0523497, "longitude": -119.3958112}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
     
-    # Points in same field with different concentrations
-    points = pd.DataFrame([{"ID": 0, "latitude": 36.114725, "longitude": -119.285175}, {"ID": 1, "latitude": 36.114282, "longitude": -119.280355}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
+    # Points in same field with different concentrations (P3) + far
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.114725, "longitude": -119.285175}, {"ID": 1, "latitude": 36.114282, "longitude": -119.280355}, {"ID": 2, "latitude": 36.255588, "longitude": -119.063412}, {"ID": 3, "latitude": 36.241934, "longitude": -119.045614}])
     
-    
+    # Same field slightly differet (P3.5) and different adjacent far - okay results
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.115002, "longitude": -119.285173}, {"ID": 1, "latitude": 36.113682, "longitude": -119.278212}, {"ID": 2, "latitude": 36.0947921, "longitude": -118.7094658}, {"ID": 3, "latitude": 36.0946982, "longitude": -118.7086598}])
+    #points = pd.DataFrame([{"ID": 0, "latitude": 36.115002, "longitude": -119.285173}, {"ID": 1, "latitude": 36.113654, "longitude": -119.280307}, {"ID": 2, "latitude": 36.0947921, "longitude": -118.7094658}, {"ID": 3, "latitude": 36.0946982, "longitude": -118.7086598}])
+
+    # Emitting vs non-emitting lot surface
+    points = pd.DataFrame([{"ID": 0, "latitude": 36.110436, "longitude": -119.298685}, {"ID": 1, "latitude": 36.111565, "longitude": -119.295516}, {"ID": 2, "latitude": 36.0947921, "longitude": -118.7094658}, {"ID": 3, "latitude": 36.0946982, "longitude": -118.7086598}])
+
+
     points = points.set_index(['ID'])
     
     point_ds = rad.sel(latitude=points.to_xarray().latitude, longitude=points.to_xarray().longitude, method='nearest')
     
     df = point_ds.to_dataframe().reset_index()
-    
+     
     emit_bands = df[df['ID'] == 0].copy()
     
     nu, nu_nm, coef = calcSpectrum(emit_bands)
@@ -352,6 +359,10 @@ def generateRetrievalGraphs():
     #raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230822T192543_2323413_004_radiance'  
     #raster_file = r'D:\Documents\Projects\comps\data\EMIT\processed\radiance\EMIT_L1B_RAD_001_20230927T214543_2327014_003_radiance'  
     
-    #matchedFilter(raster_file, nu, coef, save = True)
+    #matchedFilter(raster_file, nu, coef, save=True)
     
     inOutPlumeGraph(df, ac_df, raster_path)
+    
+    
+    
+generateRetrievalGraphs()
