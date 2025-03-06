@@ -14,6 +14,7 @@ from scipy.interpolate import interp1d
 from emit_tools import emit_xarray
 import rasterio
 from scipy.linalg import inv
+from sklearn.preprocessing import normalize
 
 from matplotlib import rcParams
 rcParams['font.family'] = 'Times New Roman'
@@ -193,6 +194,21 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     # Show the plot
     plt.show()
     
+    high_nh3 = point_df[point_df['ID'] == 0]['radiance'].reset_index(drop=True)
+    low_nh3 = point_df[point_df['ID'] == 2]['radiance'].reset_index(drop=True)
+
+    # Combine the two filtered DataFrames into one with two columns
+    df = pd.DataFrame({
+        'radiance_in': high_nh3,
+        'radiance_far': low_nh3
+    })
+
+    # Apply vector normalization using sklearn's normalize function
+    df_normalized = pd.DataFrame(normalize(df, norm='l2', axis=0))
+    
+    df_normalized.columns = ['radiance_in', 'radiance_far']
+    
+    df_normalized['wavelengths'] = point_df[point_df['ID'] == 0]['wavelengths'].reset_index(drop=True)
 
 
     in_plume = point_df.loc[point_df['ID'] == 0].copy().reset_index(drop=True)
@@ -214,7 +230,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          x='wavelengths',
          y='radiance',
          color='#1f77b4',  
-         label='Ammonia Plume',    
+         label='Ammonia plume',    
          marker='o',
          ax = ax1
      )
@@ -261,21 +277,21 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     ax2 = ax1.twinx()
     
     sns.lineplot(
-         data=out_plume,
+         data=df_normalized,
          x='wavelengths',
-         y='radiance',
+         y='radiance_in',
          color='#1f77b4',  
-         label='Ammonia Plume',    
+         label='Ammonia plume',    
          marker='o',
          ax = ax1
      )
     
-    far['radiance_s'] = far['radiance'] + 1.5
+    df_normalized['radiance_far'] = df_normalized['radiance_far'] + 0.02
     
     sns.lineplot(
-        data=far,
+        data=df_normalized,
         x='wavelengths',
-        y='radiance_s',
+        y='radiance_far',
         color='#ff7f0e',  
         label='No ammonia',  
         marker='o',
@@ -293,7 +309,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
      )
      
     plt.xlim(1600, 1700)
-    ax1.set_ylim(2.2, 3)
+    ax1.set_ylim(0.034, 0.045)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
