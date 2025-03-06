@@ -224,7 +224,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     out_plume = out_plume.drop(out_plume[out_plume.band_ratio > 200].index)
 
 
-    ### Band ratio + absorbtion spectra @ 2200 nm
+    ### Radiance + absorbtion spectra @ 2200 nm
     fig, ax1 = plt.subplots(figsize=(6.5, 4))
     ax2 = ax1.twinx()
     
@@ -238,7 +238,67 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          ax = ax1
      )
     
-    df['radiance_out'] = df['radiance_out'] + 0.32
+    df['radiance_out_s'] = df['radiance_out'] + 0.32
+    
+    sns.lineplot(
+        data=df,
+        x='wavelengths',
+        y='radiance_out_s',
+        color='#9467bd',  
+        label='Outside plume',  
+        marker='o',
+        ax = ax1
+    )
+    
+    df['radiance_far_s'] = df['radiance_far'] + 0.3
+    
+    sns.lineplot(
+        data=df,
+        x='wavelengths',
+        y='radiance_far_s',
+        color='#ff7f0e',  
+        label='No ammonia',  
+        marker='o',
+        ax = ax1
+    )
+     
+    sns.lineplot(
+        data=ac_df,
+        x='wavelengths',
+        y='coefficients',
+        marker='o',  
+        color='#2ca02c',  
+        label='Simulated absorbtion',  
+        ax = ax2
+     )
+    
+
+    plt.xlim(2280, 2360)
+    ax1.set_ylim(0.21, 0.48)
+    #ax2.set_ylim(0, 2e-21)
+    
+    ax1.set_xlabel('Wavelength (nm)')
+    ax1.set_ylabel('Radiance (uW/nm/sr/cm2)')
+    ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
+    
+    ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.945, 0.92))
+    ax2.legend(loc='upper right', frameon=False)
+    
+    plt.show()
+
+    ### Radiance + absorbtion spectra @ 2200 nm, unscaled radiance
+    fig, ax1 = plt.subplots(figsize=(6.5, 4))
+    ax2 = ax1.twinx()
+    
+    sns.lineplot(
+         data=df,
+         x='wavelengths',
+         y='radiance_in',
+         color='#1f77b4',  
+         label='Ammonia plume',    
+         marker='o',
+         ax = ax1
+     )
     
     sns.lineplot(
         data=df,
@@ -249,8 +309,6 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         marker='o',
         ax = ax1
     )
-    
-    df['radiance_far'] = df['radiance_far'] + 0.3
     
     sns.lineplot(
         data=df,
@@ -274,7 +332,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     
 
     plt.xlim(2280, 2360)
-    ax1.set_ylim(0.22, 0.44)
+    ax1.set_ylim(0, 0.5)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
@@ -285,14 +343,14 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     ax2.legend(loc='upper right', frameon=False)
     
     plt.show()
+    
 
-
-    ### Band ratio + absorbtion spectra @ 1640 nm
+    ### Radiance + absorbtion spectra @ 1640 nm
     fig, ax1 = plt.subplots(figsize=(6.5, 4))
     ax2 = ax1.twinx()
     
     sns.lineplot(
-         data=df_normalized,
+         data=df,
          x='wavelengths',
          y='radiance_in',
          color='#1f77b4',  
@@ -301,24 +359,24 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          ax = ax1
      )
     
-    df_normalized['radiance_out'] = df_normalized['radiance_out'] + 0.62
+    df['radiance_out_s'] = df['radiance_out'] + 1
     
     sns.lineplot(
-        data=df_normalized,
+        data=df,
         x='wavelengths',
-        y='radiance_out',
+        y='radiance_out_s',
         color='#9467bd',  
         label='Outside plume',  
         marker='o',
         ax = ax1
     )
     
-    df_normalized['radiance_far'] = df_normalized['radiance_far'] + 0.6
+    df['radiance_far_s'] = df['radiance_far'] + 1
     
     sns.lineplot(
-        data=df_normalized,
+        data=df,
         x='wavelengths',
-        y='radiance_far',
+        y='radiance_far_s',
         color='#ff7f0e',  
         label='No ammonia',  
         marker='o',
@@ -336,11 +394,11 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
      )
      
     plt.xlim(1600, 1700)
-    ax1.set_ylim(0.9, 0.92)
+    ax1.set_ylim(1, 4)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
-    ax1.set_ylabel('Normalized Radiance')
+    ax1.set_ylabel('Radiance')
     ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
     
     ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.945, 0.92))
