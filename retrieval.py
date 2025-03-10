@@ -232,7 +232,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          data=df,
          x='wavelengths',
          y='radiance_in',
-         color='#1f77b4',  
+         color='#ff7f0e',  
          label='Ammonia plume',    
          marker='o',
          ax = ax1
@@ -258,7 +258,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         data=df,
         x='wavelengths',
         y='radiance_far_s',
-        color='#ff7f0e',  
+        color='#1f77b4',  
         label='Clean air',  
         marker='o',
         ax = ax1
@@ -297,7 +297,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          data=df,
          x='wavelengths',
          y='radiance_in',
-         color='#1f77b4',  
+         color='#ff7f0e',  
          label='Ammonia plume',    
          marker='o',
          ax = ax1
@@ -317,7 +317,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         data=df,
         x='wavelengths',
         y='radiance_far',
-        color='#ff7f0e',  
+        color='#1f77b4',  
         label='Clean air',  
         marker='o',
         ax = ax1
@@ -357,13 +357,13 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          data=df,
          x='wavelengths',
          y='radiance_in',
-         color='#1f77b4',  
+         color='#ff7f0e',  
          label='Ammonia plume',    
          marker='o',
          ax = ax1
      )
     
-    df['radiance_out_s'] = df['radiance_out'] * 3.15
+    df['radiance_out_s'] = df['radiance_out'] * 3.16
     
     sns.lineplot(
         data=df,
@@ -375,13 +375,13 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         ax = ax1
     )
     
-    df['radiance_far_s'] = df['radiance_far'] * 3
+    df['radiance_far_s'] = df['radiance_far'] * 3.01
     
     sns.lineplot(
         data=df,
         x='wavelengths',
         y='radiance_far_s',
-        color='#ff7f0e',  
+        color='#1f77b4',  
         label='Clean air',  
         marker='o',
         ax = ax1
@@ -420,7 +420,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
          data=df,
          x='wavelengths',
          y='radiance_in',
-         color='#1f77b4',  
+         color='#ff7f0e',  
          label='Ammonia plume',    
          marker='o',
          ax = ax1
@@ -440,7 +440,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         data=df,
         x='wavelengths',
         y='radiance_far',
-        color='#ff7f0e',  
+        color='#1f77b4',  
         label='Clean air',  
         marker='o',
         ax = ax1
