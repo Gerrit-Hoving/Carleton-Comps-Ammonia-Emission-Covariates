@@ -1,4 +1,4 @@
-# Carleton Comps-AVIRIS Ammonia Emission Covariates
+# Open Replication Code: Novel Measures of Feedlot Ammonia Emissions: Indirectly through Random Forest Regression on Spectral Data and Directly through Spectral Matched Filter
 
 Replication code for a senior thesis project on feedlot ammonia emissions. Repository and code cleanup are a work in progress. 
  
