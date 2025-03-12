@@ -9,12 +9,15 @@ Code for running analysis and eventually replicating figures
 
 import pandas as pd
 from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 from matplotlib import rcParams
 rcParams['font.family'] = 'Times New Roman'
 rcParams['font.size'] = 12  
+rcParams["text.usetex"] = False
+rcParams["mathtext.default"] = "regular"
 
 from analysis import randomForestReg, partialLeastSquaresReg, linReg
 from analysis import graphRFRegStability, graphCompareModels, graphModelPredictions
@@ -103,7 +106,15 @@ print(linReg(input_df_full[['NH3 (kg/h)', 'PenArea (m2)', ]], 'NH3 (kg/h)') )
 print(linReg(input_df_full[['NH3 (kg/h)', 'OverallArea (m2)', 'PenArea (m2)']], 'NH3 (kg/h)') )
 print(linReg(input_df_full, 'NH3 (kg/h)') )
 
+model = LinearRegression()
 
+# Fit the model
+model.fit(input_df_full[['OverallArea (m2)']], input_df_full[['NH3 (kg/h)']])
+
+# Get the R² score
+r2 = model.score(input_df_full[['OverallArea (m2)']], input_df_full[['NH3 (kg/h)']])
+
+print(r2)
 
 comparison_dfs = {'all':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
 #graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=500)
@@ -168,7 +179,6 @@ print(df['R2'].median(axis=0))
 print(df['MAE'].median(axis=0))
 '''
 
-
 ### Final figures
 
 # Fig 7
@@ -176,38 +186,46 @@ plt.figure(figsize=(6.5,4))
 sns.set_theme(style="ticks", font="Times New Roman", font_scale=1.2)
 #plt.scatter('OverallArea (m2)', 'NH3 (kg/h)', data=input_df_full)
 sns.regplot(x='OverallArea (m2)', y='NH3 (kg/h)', data=input_df_full, scatter_kws={'s': 20}, line_kws={'color': 'red', 'linestyle': '--'})
-plt.xlabel('Area (m^2)')
+plt.xlabel('Area ($km^{2}$)')
 plt.ylabel('Emission Rate (kg/h)')
 plt.savefig("../figures/Fig7.png",bbox_inches='tight',dpi=300)
 plt.show()
 
 # Fig 8
-imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=250, importance_tt_level=0.3) #500 iter-100 enough?
+#imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_full, iterations=100, importance_tt_level=0.3, save_as=None) #200 iter
 
 # Fig 9
-graphRFEst('NH3 (kg/h)', 1, 100, 1, input_df_full, n_runs=1000) #1000 iter
-graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000) #1000 iter
+#graphRFEst('NH3 (kg/h)', 1, 1000, 5, input_df_full, n_runs=100) #1000 iter
+#graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000) #1000 iter
 
 # Fig 10+11
-comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
-graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=200) #200 iter
+#comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
+#graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=200) #200 iter
 
 # Fig 12
-graphFeatureImportance(imp_df)
+#graphFeatureImportance(imp_df)
 
 # Fig 13
-graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='RF') #100 iter
+#graphModelPredictions(target = 'NH3 (kg/h)', df=input_df_full, iterations = 100, model='RF') #100 iter
+
+
+#Other tests
+#graphRFEst('NH3 (kg/h)', 1, 1000, 5, input_df_full, n_runs=100, save=False) #1000 iter
+
+#imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=1000, df=input_df_full, iterations=500, importance_tt_level=0.3, save_as=None) #500 iter-100 enough?
+#imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=1000, df=input_df_bands, iterations=500, importance_tt_level=0.2, save_as=None) #500 iter-100 enough?
+
 
 
 
 ## Appendix
 
 # Fig A1
-imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_bands, iterations=250, importance_tt_level=0.3, save_as="FigA1") #500 iter-100 enough?
+imp_df = graphRFRegStability('NH3 (kg/h)', n_estimators=100, df=input_df_bands, iterations=200, importance_tt_level=0.3, save_as="FigA1") #500 iter-100 enough?
 
 # Fig A2
-graphRFEst('NH3 (kg/h)', 1, 300, 1, input_df_bands, n_runs=1000, save_as="FigA2a") #1000 iter
-graphPLSRComp(input_df_bands, 'NH3 (kg/h)', 1, 16, 1, n_runs=1000, save_as="FigA2b") #1000 iter
+graphRFEst('NH3 (kg/h)', 1, 300, 1, input_df_bands, n_runs=100, save_as="FigA2a") #1000 iter
+graphPLSRComp(input_df_bands, 'NH3 (kg/h)', 1, 16, 1, n_runs=100, save_as="FigA2b") #1000 iter
 
 
 

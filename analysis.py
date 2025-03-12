@@ -34,6 +34,8 @@ EMIT_BAND_META_PATH = r'D:\Documents\Projects\comps\data\EMIT\band_metadata.csv'
 from matplotlib import rcParams
 rcParams['font.family'] = 'Times New Roman'
 rcParams['font.size'] = 12  
+rcParams["text.usetex"] = False
+rcParams["mathtext.default"] = "regular"
 
 sns.set_theme(style="ticks")
 
@@ -297,7 +299,7 @@ def findParams(target, checkModel, df = None):
     print("Best Parameters:", grid_search.best_params_)
     print("Best Score:", grid_search.best_score_)
 
-def graphRFEst(target, start, stop, step=1, df=None, n_runs=1, save_as="Fig9a"):
+def graphRFEst(target, start, stop, step=1, df=None, n_runs=1, save_as="Fig9a", save=True):
     r2s = []
     for n_estimators in range(start, stop, step):
         r2_values = []
@@ -313,12 +315,13 @@ def graphRFEst(target, start, stop, step=1, df=None, n_runs=1, save_as="Fig9a"):
     plt.figure(figsize=(3, 3))
     plt.scatter(range(start, stop, step), r2s)
     plt.title('Random Forest')    
-    plt.xlabel('n_estimators')      
-    plt.ylabel('Accuracy (R^2)')   
-    plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
+    plt.xlabel('# of estimators')      
+    plt.ylabel('Accuracy ($R^2$)')   
+    if save:
+        plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
     plt.show()
     
-def graphPLSRComp(df, target, start, stop, step=1, n_runs=1, save_as="Fig9b"):
+def graphPLSRComp(df, target, start, stop, step=1, n_runs=1, save_as="Fig9b", save=True):
     r2s = []
     for n_components in range(start, stop, step):
         r2_values = []
@@ -335,9 +338,10 @@ def graphPLSRComp(df, target, start, stop, step=1, n_runs=1, save_as="Fig9b"):
     plt.figure(figsize=(3, 3))
     plt.scatter(range(start, stop, step), r2s)
     plt.title('PLSR')    
-    plt.xlabel('n_components')
-    plt.ylabel('Accuracy (R^2)') 
-    plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
+    plt.xlabel('# of components')
+    plt.ylabel('Accuracy ($R^2$)') 
+    if save:
+        plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
     plt.show()
      
 def graphRFClass(target, start, stop, step=1):
@@ -542,10 +546,12 @@ def graphRFRegStability(target = 'NH3 (kg/h)', n_estimators = 100, df=None, iter
     plt.figure(figsize=(6.5, 4))
     sns.boxplot(x='Category', y='R2', data=df)
     #plt.title('Random Forest Model Performance')
+    plt.axhline(y=0, color='red', linestyle='--', linewidth=1)
     plt.xlabel('Proportion of Data Reserved for Testing')
-    plt.ylabel('Accuracy (R^2)')
+    plt.ylabel('Accuracy ($R^2$)')
     plt.ylim(bottom=-2, top=1)
-    plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
+    if save_as is not None:
+        plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
     plt.show()
     
     if importance_tt_level is not None:
@@ -663,7 +669,7 @@ def graphCompareModels(target='NH3 (kg/h)', df=None, iterations=100, dimensional
     sns.boxplot(x='Category', y='R2', data=df)
     #plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
     plt.xlabel('Model, Input data')
-    plt.ylabel('Accuracy (R^2)')
+    plt.ylabel('Accuracy ($R^2$)')
     plt.ylim(bottom=-2, top=1)
     #plt.xticks(rotation=90)
     plt.axhline(y=0, color='red', linestyle='--', linewidth=1)
@@ -712,13 +718,12 @@ def graphModelPredictions(target='NH3 (kg/h)', df=None, iterations = 100, model 
     sns.scatterplot(x='Test', y='Predicted', data=df)
     plt.xlim(left=0, right=200)
     plt.ylim(bottom=0, top=200)
-    #plt.title(model + ' Regression Model Predictions')
-    plt.xlabel('Test')
-    plt.ylabel('Predicted')
     # Add 1-1 Line
     plt.plot([0, 200], [0, 200], color='red', linestyle='--', label='1:1 line')
     # Add regression line
     sns.regplot(x='Test', y='Predicted', scatter=False, color='blue', label='Linear regression line', data=df)
+    plt.xlabel('Measured Emissions (kg/hr)')
+    plt.ylabel('Predicted Emissions (kg/hr)')
     plt.savefig("../figures/" + save_as + ".png", bbox_inches='tight', dpi=300)
     plt.show()
 
