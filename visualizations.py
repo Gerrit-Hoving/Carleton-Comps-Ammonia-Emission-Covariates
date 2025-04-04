@@ -15,7 +15,7 @@ import seaborn as sns
 
 from matplotlib import rcParams
 rcParams['font.family'] = 'Times New Roman'
-rcParams['font.size'] = 12  
+rcParams['font.size'] = 20
 rcParams["text.usetex"] = False
 rcParams["mathtext.default"] = "regular"
 
@@ -182,8 +182,8 @@ print(df['MAE'].median(axis=0))
 ### Final figures
 
 # Fig 7
-plt.figure(figsize=(6.5,4))
-sns.set_theme(style="ticks", font="Times New Roman", font_scale=1.2)
+plt.figure(figsize=(5,5))
+sns.set_theme(style="ticks", font="Times New Roman", font_scale=2.0)
 #plt.scatter('OverallArea (m2)', 'NH3 (kg/h)', data=input_df_full)
 sns.regplot(x='OverallArea (m2)', y='NH3 (kg/h)', data=input_df_full, scatter_kws={'s': 20}, line_kws={'color': 'red', 'linestyle': '--'})
 plt.xlabel('Area ($km^{2}$)')
@@ -199,8 +199,8 @@ plt.show()
 #graphPLSRComp(input_df_full, 'NH3 (kg/h)', 3, 16, 1, n_runs=1000) #1000 iter
 
 # Fig 10+11
-#comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
-#graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=200) #200 iter
+comparison_dfs = {'full':input_df_full, 'bands':input_df_bands, 'random':input_df_random}
+graphCompareModels(target = 'NH3 (kg/h)', df=comparison_dfs, iterations=300, save_as = "Fig12-poster") #200 iter
 
 # Fig 12
 #graphFeatureImportance(imp_df)

@@ -18,7 +18,7 @@ from sklearn.preprocessing import normalize
 
 from matplotlib import rcParams
 rcParams['font.family'] = 'Times New Roman'
-rcParams['font.size'] = 12  
+rcParams['font.size'] = 20  
 
 
 
@@ -350,7 +350,7 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
     
 
     ### Radiance + absorbtion spectra @ 1640 nm
-    fig, ax1 = plt.subplots(figsize=(6.5, 4))
+    fig, ax1 = plt.subplots(figsize=(6, 5))
     ax2 = ax1.twinx()
     
     sns.lineplot(
@@ -393,20 +393,20 @@ def inOutPlumeGraph(point_df, ac_df, raster_path):
         y='coefficients',
         marker='o',  
         color='#2ca02c',  
-        label='Simulated absorbtion',  
+          
         ax = ax2
      )
      
     plt.xlim(1590, 1690)
-    ax1.set_ylim(2.6, 3.3)
+    ax1.set_ylim(2.6, 3.4)
     #ax2.set_ylim(0, 2e-21)
     
     ax1.set_xlabel('Wavelength (nm)')
-    ax1.set_ylabel('Radiance (uW/nm/sr/cm2)')
+    ax1.set_ylabel('Radiance (uW/nm/sr/cm$^{2}$)')
     ax2.set_ylabel('Simulated NH3 Absorbtion (cm$^{-1}$)')
     
-    ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(0.9415, 0.925))
-    ax2.legend(loc='upper right', frameon=False)
+    ax1.legend(loc='upper right', frameon=False, bbox_to_anchor=(1.04, 1.05))
+    #ax2.legend(loc='upper right', frameon=False)
 
     plt.savefig("../figures/Fig15.png",bbox_inches='tight',dpi=300)    
     plt.show()

@@ -33,7 +33,7 @@ EMIT_BAND_META_PATH = r'D:\Documents\Projects\comps\data\EMIT\band_metadata.csv'
 
 from matplotlib import rcParams
 rcParams['font.family'] = 'Times New Roman'
-rcParams['font.size'] = 12  
+rcParams['font.size'] = 18  
 rcParams["text.usetex"] = False
 rcParams["mathtext.default"] = "regular"
 
@@ -665,7 +665,7 @@ def graphCompareModels(target='NH3 (kg/h)', df=None, iterations=100, dimensional
 
     # Graph box plot of accuracy at different test values
     df = pd.DataFrame(rows)
-    plt.figure(figsize=(6.5, 4))
+    plt.figure(figsize=(7.5, 4))
     sns.boxplot(x='Category', y='R2', data=df)
     #plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
     plt.xlabel('Model, Input data')
@@ -677,7 +677,7 @@ def graphCompareModels(target='NH3 (kg/h)', df=None, iterations=100, dimensional
     plt.savefig("../figures/" + save_as[0] + ".png", bbox_inches='tight', dpi=300)
     plt.show()
     
-    plt.figure(figsize=(6.5, 4))
+    plt.figure(figsize=(7.5, 4))
     sns.boxplot(x='Category', y='MAE', data=df)
     #plt.title('Regression Model Performance, Average of ' + str(iterations) + ' iterations')
     plt.xlabel('Model, Input data')
